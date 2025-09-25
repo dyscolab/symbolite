@@ -11,27 +11,30 @@ Symbolic functions.
 from __future__ import annotations
 
 import dataclasses
-from typing import Any
+from typing import Any, Generic, TypeVar, cast
 
 from .expression import Expression, NamedExpression
 from .named import Named
 
 
+R = TypeVar("R", bound=NamedExpression)
+
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class Function(Named):
+class Function(Named, Generic[R]):
     """A callable primitive that will return a call."""
 
     fmt: str | None = None
     arity: int | None = None
 
     @property
-    def output_type(self) -> type[NamedExpression]:
-        return NamedExpression
+    def output_type(self) -> type[R]:
+        return cast(type[R], NamedExpression)
 
-    def _call(self, *args: Any, **kwargs: Any) -> Any:
-        return self.output_type(expression=self._build_resolver(*args, **kwargs))
+    def _call(self, *args: Any, **kwargs: Any) -> R:
+        resolver = self._build_resolver(*args, **kwargs)
+        return cast(R, self.output_type(expression=resolver))
 
-    def _build_resolver(self, *args: Any, **kwargs: Any) -> Expression:
+    def _build_resolver(self, *args: Any, **kwargs: Any) -> Expression[R]:
         if self.arity is None:
             return Expression(self, args, tuple(kwargs.items()))
         if kwargs:
@@ -50,4 +53,3 @@ class Function(Named):
 
         plain_args = args + tuple(f"{k}={v}" for k, v in kwargs.items())
         return f"{str(self)}({', '.join((str(v) for v in plain_args))})"
-

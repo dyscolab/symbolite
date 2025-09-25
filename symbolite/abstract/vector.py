@@ -11,8 +11,10 @@ Objects and functions for vector operations.
 from __future__ import annotations
 
 import dataclasses
+import warnings
 from typing import Any, Iterable, Mapping, Sequence, overload
 
+from ..core import NamedExpression
 from . import symbol
 from .scalar import NumberT, Scalar
 from .symbol import Function, Symbol, downcast
@@ -21,11 +23,29 @@ VectorT = Iterable[NumberT]
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class Vector(Symbol):
+class Vector(NamedExpression):
     """A user defined symbol."""
 
+    def eq(self, other: Any) -> Symbol:
+        return symbol.eq(self, other)
+
+    def ne(self, other: Any) -> Symbol:
+        return symbol.ne(self, other)
+
+    def __lt__(self, other: Any) -> Symbol:
+        return symbol.lt(self, other)
+
+    def __le__(self, other: Any) -> Symbol:
+        return symbol.le(self, other)
+
+    def __gt__(self, other: Any) -> Symbol:
+        return symbol.gt(self, other)
+
+    def __ge__(self, other: Any) -> Symbol:
+        return symbol.ge(self, other)
+
     def __getitem__(self, key: int | Scalar) -> Scalar:
-        return downcast(super().__getitem__(key), Scalar)
+        return downcast(symbol.getitem(self, key), Scalar)
 
     def __getattr__(self, key: Any):
         raise AttributeError(key)
@@ -63,8 +83,7 @@ class Vector(Symbol):
         """Implements behavior for exponents using the ** operator."""
         if modulo is None:
             return downcast(symbol.pow(self, other), Vector)
-        else:
-            return downcast(symbol.pow3(self, other, modulo), Vector)
+        return downcast(symbol.pow3(self, other, modulo), Vector)
 
     def __lshift__(self, other: Any) -> Vector:
         """Implements left bitwise shift using the << operator."""
@@ -152,9 +171,25 @@ class Vector(Symbol):
         """Implements behavior for inversion using the ~ operator."""
         return downcast(symbol.invert(self), Vector)
 
+    def __str__(self) -> str:
+        if self.expression is None:
+            return super().__str__()
+        return str(self.expression)
+
+    def __set_name__(self, owner: Any, name: str):
+        if name.endswith("__return"):
+            return
+        current_name = getattr(self, "name", None)
+        if current_name is not None and current_name != name:
+            warnings.warn(
+                f"Mismatched names in attribute {name}: {type(self)} is named {current_name}"
+            )
+
+        object.__setattr__(self, "name", name)
+
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class CumulativeFunction(Function):
+class CumulativeFunction(Function[Scalar]):
     namespace: str = "vector"
     arity: int = 1
 
@@ -181,6 +216,15 @@ def vectorize(
 
 @overload
 def vectorize(
+    expr: Scalar,
+    symbol_names: Sequence[str] | Mapping[str, int],
+    varname: str = "vec",
+    scalar_type: type[Scalar] = Scalar,
+) -> Scalar: ...
+
+
+@overload
+def vectorize(
     expr: Symbol,
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
@@ -198,11 +242,11 @@ def vectorize(
 
 
 def vectorize(
-    expr: NumberT | Symbol | Iterable[NumberT | Symbol],
+    expr: NumberT | Symbol | Scalar | Vector | Iterable[NumberT | Symbol | Scalar | Vector],
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
     scalar_type: type[Scalar] = Scalar,
-) -> NumberT | Symbol | tuple[NumberT | Symbol, ...]:
+) -> NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...]:
     """Vectorize expression by replacing scalar symbols
     by an array at a given indices.
 
@@ -219,7 +263,7 @@ def vectorize(
     if isinstance(expr, NumberT):
         return expr
 
-    if not isinstance(expr, Symbol):
+    if not isinstance(expr, (Symbol, Scalar, Vector)):
         return tuple(vectorize(symbol, symbol_names, varname) for symbol in expr)
 
     if isinstance(symbol_names, dict):
@@ -259,10 +303,13 @@ def auto_vectorize(
 
 
 def auto_vectorize(
-    expr: NumberT | Symbol | Iterable[Symbol],
+    expr: NumberT | Symbol | Scalar | Vector | Iterable[Symbol | Scalar | Vector],
     varname: str = "vec",
     scalar_type: type[Scalar] = Scalar,
-) -> tuple[tuple[str, ...], NumberT | Symbol | tuple[NumberT | Symbol, ...]]:
+) -> tuple[
+    tuple[str, ...],
+    NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...],
+]:
     """Vectorize expression by replacing all test_scalar symbols
     by an array at a given indices. Symbols are ordered into
     the array alphabetically.
@@ -285,7 +332,7 @@ def auto_vectorize(
     if isinstance(expr, NumberT):
         return tuple(), expr
 
-    if not isinstance(expr, Symbol):
+    if not isinstance(expr, (Symbol, Scalar, Vector)):
         expr = tuple(expr)
         out = set[str]()
         for symbol in expr:

@@ -13,7 +13,7 @@ from functools import singledispatch
 from operator import attrgetter
 from typing import Any, Callable
 
-from ..abstract import Symbol
+from ..abstract import Scalar, Symbol, Vector
 from ..abstract.symbol import UserFunction
 from ..core import (
     Function,
@@ -42,29 +42,42 @@ def evaluate_impl_str(expr: str, libsl: types.ModuleType) -> Any:  # | Unsupport
     return attrgetter(expr)(libsl)
 
 
-@evaluate_impl.register
-def _(self: Symbol, libsl: types.ModuleType) -> Any:
+def _evaluate_symbol_like(self: Symbol | Scalar | Vector, libsl: types.ModuleType) -> Any:
     if self.expression is not None:
         return evaluate_impl(self.expression, libsl)
 
     if self.namespace:
         name = str(self)
-
         value = evaluate_impl(name, libsl)
 
         if value is Unsupported:
             raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
 
         return value
-    else:
-        # User defined symbol, txry to map the class
-        name = f"{self.__class__.__module__.split('.')[-1]}.{self.__class__.__name__}"
-        f = evaluate_impl(name, libsl)
 
-        if f is Unsupported:
-            raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
+    # User defined symbol, try to map the class
+    name = f"{self.__class__.__module__.split('.')[-1]}.{self.__class__.__name__}"
+    f = evaluate_impl(name, libsl)
 
-        return f(self.name)
+    if f is Unsupported:
+        raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
+
+    return f(self.name)
+
+
+@evaluate_impl.register
+def _(self: Symbol, libsl: types.ModuleType) -> Any:
+    return _evaluate_symbol_like(self, libsl)
+
+
+@evaluate_impl.register
+def _(self: Scalar, libsl: types.ModuleType) -> Any:
+    return _evaluate_symbol_like(self, libsl)
+
+
+@evaluate_impl.register
+def _(self: Vector, libsl: types.ModuleType) -> Any:
+    return _evaluate_symbol_like(self, libsl)
 
 
 

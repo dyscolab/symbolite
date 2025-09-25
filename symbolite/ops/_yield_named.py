@@ -11,7 +11,7 @@ Yields all named structures inside a symbolic structure.
 from functools import singledispatch
 from typing import Any, Generator
 
-from ..abstract import Symbol
+from ..abstract import Scalar, Symbol, Vector
 from ..core import (
     Function,
     Expression,
@@ -41,13 +41,29 @@ def yield_named_named(self: Named, include_anonymous: bool = False) -> Generator
     if include_anonymous or self.name is not None:
         yield self
 
-@yield_named.register
-def yield_named_symbol(self: Symbol, include_anonymous: bool = False) -> Generator[Named, None, None]:
+def _yield_named_symbol_like(
+    self: Symbol | Scalar | Vector, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     if self.expression is None:
         if include_anonymous or self.name is not None:
             yield self
     else:
         yield from yield_named(self.expression, include_anonymous)
+
+
+@yield_named.register
+def yield_named_symbol(self: Symbol, include_anonymous: bool = False) -> Generator[Named, None, None]:
+    yield from _yield_named_symbol_like(self, include_anonymous)
+
+
+@yield_named.register
+def yield_named_scalar(self: Scalar, include_anonymous: bool = False) -> Generator[Named, None, None]:
+    yield from _yield_named_symbol_like(self, include_anonymous)
+
+
+@yield_named.register
+def yield_named_vector(self: Vector, include_anonymous: bool = False) -> Generator[Named, None, None]:
+    yield from _yield_named_symbol_like(self, include_anonymous)
 
 @yield_named.register
 def yield_named_base_function(

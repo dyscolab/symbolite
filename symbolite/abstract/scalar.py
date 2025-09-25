@@ -11,9 +11,10 @@ Objects and functions for scalar operations.
 from __future__ import annotations
 
 import dataclasses
+import warnings
 from typing import Any
 
-from ..core import Function, Unsupported
+from ..core import Function, NamedExpression, Unsupported
 from . import symbol
 from .symbol import Symbol, downcast
 
@@ -21,8 +22,26 @@ NumberT = int | float | complex
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class Scalar(Symbol):
+class Scalar(NamedExpression):
     """A user defined symbol."""
+
+    def eq(self, other: Any) -> Symbol:
+        return symbol.eq(self, other)
+
+    def ne(self, other: Any) -> Symbol:
+        return symbol.ne(self, other)
+
+    def __lt__(self, other: Any) -> Symbol:
+        return symbol.lt(self, other)
+
+    def __le__(self, other: Any) -> Symbol:
+        return symbol.le(self, other)
+
+    def __gt__(self, other: Any) -> Symbol:
+        return symbol.gt(self, other)
+
+    def __ge__(self, other: Any) -> Symbol:
+        return symbol.ge(self, other)
 
     def __getitem__(self, key: Any):
         return Unsupported
@@ -152,9 +171,25 @@ class Scalar(Symbol):
         """Implements behavior for inversion using the ~ operator."""
         return downcast(symbol.invert(self), Scalar)
 
+    def __str__(self) -> str:
+        if self.expression is None:
+            return super().__str__()
+        return str(self.expression)
+
+    def __set_name__(self, owner: Any, name: str):
+        if name.endswith("__return"):
+            return
+        current_name = getattr(self, "name", None)
+        if current_name is not None and current_name != name:
+            warnings.warn(
+                f"Mismatched names in attribute {name}: {type(self)} is named {current_name}"
+            )
+
+        object.__setattr__(self, "name", name)
+
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class ScalarFunction(Function):
+class ScalarFunction(Function[Scalar]):
     @property
     def output_type(self) -> type[Scalar]:
         return Scalar
@@ -240,4 +275,4 @@ pi = Scalar("pi", namespace="scalar")
 nan = Scalar("nan", namespace="scalar")
 tau = Scalar("tau", namespace="scalar")
 
-del Function, Symbol, dataclasses
+del Function, Symbol, dataclasses, warnings

@@ -20,6 +20,7 @@ from typing import (
     Literal,
     ParamSpec,
     TypeVar,
+    cast,
 )
 
 from typing_extensions import Self
@@ -240,10 +241,12 @@ S = TypeVar("S", bound=Symbol)
 
 
 def downcast(symbol_obj: Symbol, subclass: type[S]) -> S:
+    expr = symbol_obj.expression
+    cast_expr = cast("Expression[S] | None", expr)
     return subclass(
         name=symbol_obj.name,
         namespace=symbol_obj.namespace,
-        expression=symbol_obj.expression,
+        expression=cast_expr,
     )
 
 
@@ -267,7 +270,7 @@ def _add_parenthesis(
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class PythonFunction(Function):
+class PythonFunction(Function[Symbol]):
     @property
     def output_type(self) -> type[Symbol]:
         return Symbol

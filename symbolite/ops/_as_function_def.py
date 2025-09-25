@@ -11,7 +11,7 @@ Yields all named structures inside a symbolic structure.
 from functools import singledispatch
 from typing import Any
 
-from ..abstract import Symbol
+from ..abstract import Scalar, Symbol, Vector
 from ..core import NamedExpression, SymbolicNamespace, SymbolicNamespaceMeta
 from .base import assign, build_function_code, free_symbols
 
@@ -59,7 +59,7 @@ def _(
     lines: list[str] = []
     for attr_name in dir(expr):
         attr = getattr(expr, attr_name)
-        if not isinstance(attr, Symbol):
+        if not isinstance(attr, (Symbol, Scalar, Vector)):
             continue
 
         if attr.expression is not None:

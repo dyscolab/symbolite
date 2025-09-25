@@ -13,16 +13,23 @@ from __future__ import annotations
 
 import dataclasses
 import functools
-from typing import Any
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
+
+from typing_extensions import Self
 
 from .named import Named
 
+if TYPE_CHECKING:
+    from .function import Function
+
+T_co = TypeVar("T_co", bound="NamedExpression")
+
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class Expression:
+class Expression(Generic[T_co]):
     """A Function that has been called with certain arguments."""
 
-    func: Named
+    func: "Function[T_co]"
     args: tuple[Any, ...]
     kwargs_items: tuple[tuple[str, Any], ...] = ()
 
@@ -39,6 +46,7 @@ class Expression:
 
     def __repr__(self) -> str:
         from ..ops.util import repr_without_defaults
+
         return repr_without_defaults(self)
 
 
@@ -46,4 +54,4 @@ class Expression:
 class NamedExpression(Named):
     """An expression with name and namespace."""
 
-    expression: Expression | None = None
+    expression: Expression[Self] | None = None

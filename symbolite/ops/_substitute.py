@@ -10,9 +10,9 @@ Replace symbols, functions, values, etc by others.
 
 import inspect
 from functools import singledispatch
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
-from ..abstract import Symbol
+from ..abstract import Scalar, Symbol, Vector
 from ..core import Expression, SymbolicNamespace, SymbolicNamespaceMeta
 
 
@@ -29,14 +29,34 @@ def substitute(expr: Any, replacements: Mapping[Any, Any]) -> Any:
     """
     return replacements.get(expr, expr)
 
-@substitute.register
-def substitute_symbol(self: Symbol, mapper: Mapping[Any, Any]) -> Symbol:
+def _substitute_named_expression(
+    self: Symbol | Scalar | Vector,
+    mapper: Mapping[Any, Any],
+    cls: type[Symbol | Scalar | Vector],
+):
     if self.expression is None:
         return mapper.get(self, self)
     out = substitute(self.expression, mapper)
     if not isinstance(out, Expression):
         return out
-    return self.__class__(name=self.name, namespace=self.namespace, expression=out)
+    return cls(name=self.name, namespace=self.namespace, expression=out)
+
+
+@substitute.register
+def substitute_symbol(self: Symbol, mapper: Mapping[Any, Any]) -> Symbol:
+    return _substitute_named_expression(self, mapper, self.__class__)
+
+
+@substitute.register
+def substitute_scalar(self: Scalar, mapper: Mapping[Any, Any]) -> Scalar:
+    out = _substitute_named_expression(self, mapper, Scalar)
+    return cast(Scalar, out)
+
+
+@substitute.register
+def substitute_vector(self: Vector, mapper: Mapping[Any, Any]) -> Vector:
+    out = _substitute_named_expression(self, mapper, Vector)
+    return cast(Vector, out)
 
 @substitute.register
 def substitue_expression(self: Expression, mapper: Mapping[Any, Any]) -> Expression:
@@ -59,4 +79,3 @@ def _(self, replacements: Mapping[Any, Any]) -> Any:
         d[attr_name] = substitute(attr, replacements)
 
     return type(self.__name__, inspect.getmro(self), d)
-

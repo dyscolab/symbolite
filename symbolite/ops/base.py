@@ -132,9 +132,13 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
 
 
 def is_free_symbol(obj: Any) -> bool:
-    from ..abstract import Symbol
+    from ..abstract import Scalar, Symbol, Vector
 
-    return isinstance(obj, Symbol) and obj.expression is None and obj.namespace == ""
+    return (
+        isinstance(obj, (Symbol, Scalar, Vector))
+        and obj.expression is None
+        and obj.namespace == ""
+    )
 
 
 def free_symbols(obj: Any) -> tuple[Symbol]:
@@ -170,4 +174,3 @@ def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
     
     ff = compare_namespace(namespace)
     return set(map(str, filter(ff, yield_named(self, False))))
-
