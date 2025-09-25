@@ -13,7 +13,8 @@ from __future__ import annotations
 import collections
 import types
 import warnings
-from typing import TYPE_CHECKING, Any, Iterable
+from collections.abc import Iterable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ..abstract import Symbol
@@ -49,7 +50,6 @@ def build_function_code(
 
 def assign(lhs, rhs):
     return f"{lhs} = {rhs}"
-
 
 
 def compile(
@@ -106,7 +106,6 @@ def inspect(expr: Any) -> dict[Any, int]:
     return {expr: 1}
 
 
-
 def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     """Evaluate expression.
 
@@ -127,8 +126,6 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
         from ..impl import libstd as libsl
 
     return evaluate_impl(expr, libsl)
-
-
 
 
 def is_free_symbol(obj: Any) -> bool:
@@ -171,6 +168,6 @@ def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
     """
     from . import yield_named
     from .util import compare_namespace
-    
+
     ff = compare_namespace(namespace)
     return set(map(str, filter(ff, yield_named(self, False))))

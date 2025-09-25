@@ -8,13 +8,14 @@ Yields all named structures inside a symbolic structure.
 :license: BSD, see LICENSE for more details.
 """
 
+from collections.abc import Generator
 from functools import singledispatch
-from typing import Any, Generator
+from typing import Any
 
 from ..abstract import Scalar, Symbol, Vector
 from ..core import (
-    Function,
     Expression,
+    Function,
     Named,
     SymbolicNamespace,
     SymbolicNamespaceMeta,
@@ -25,10 +26,10 @@ from ..core import (
 def yield_named(
     self: Any, include_anonymous: bool = False
 ) -> Generator[Named, None, None]:
-    """Yields all named structures inside a symbolic structure.
-    """
+    """Yields all named structures inside a symbolic structure."""
     return
     yield Named()  # This is required to make it a generator.
+
 
 @yield_named.register(tuple)
 @yield_named.register(list)
@@ -36,10 +37,14 @@ def yield_named_tuple(expr: tuple[Any]) -> Generator[Named, None, None]:
     for el in expr:
         yield from yield_named(el)
 
+
 @yield_named.register
-def yield_named_named(self: Named, include_anonymous: bool = False) -> Generator[Named, None, None]:
+def yield_named_named(
+    self: Named, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     if include_anonymous or self.name is not None:
         yield self
+
 
 def _yield_named_symbol_like(
     self: Symbol | Scalar | Vector, include_anonymous: bool = False
@@ -52,18 +57,25 @@ def _yield_named_symbol_like(
 
 
 @yield_named.register
-def yield_named_symbol(self: Symbol, include_anonymous: bool = False) -> Generator[Named, None, None]:
+def yield_named_symbol(
+    self: Symbol, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     yield from _yield_named_symbol_like(self, include_anonymous)
 
 
 @yield_named.register
-def yield_named_scalar(self: Scalar, include_anonymous: bool = False) -> Generator[Named, None, None]:
+def yield_named_scalar(
+    self: Scalar, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     yield from _yield_named_symbol_like(self, include_anonymous)
 
 
 @yield_named.register
-def yield_named_vector(self: Vector, include_anonymous: bool = False) -> Generator[Named, None, None]:
+def yield_named_vector(
+    self: Vector, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     yield from _yield_named_symbol_like(self, include_anonymous)
+
 
 @yield_named.register
 def yield_named_base_function(
@@ -84,6 +96,7 @@ def yield_named_expression(
 
     for _, v in self.kwargs_items:
         yield from yield_named(v, include_anonymous)
+
 
 # In Python 3.10 UnionTypes are not supported by singledispatch.register
 @yield_named.register(SymbolicNamespaceMeta)

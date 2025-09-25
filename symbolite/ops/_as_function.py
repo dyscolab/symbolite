@@ -9,8 +9,9 @@ Yields all named structures inside a symbolic structure.
 """
 
 import types
+from collections.abc import Callable
 from functools import singledispatch
-from typing import Any, Callable
+from typing import Any
 
 
 @singledispatch
@@ -36,4 +37,3 @@ def as_function(
     f = lm["f"]
     f.__symbolite_def__ = function_def
     return f
-

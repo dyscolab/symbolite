@@ -11,16 +11,14 @@ Symbolic functions.
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, cast
 
 from .expression import Expression, NamedExpression
 from .named import Named
 
 
-R = TypeVar("R", bound=NamedExpression)
-
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class Function(Named, Generic[R]):
+class Function[R: NamedExpression](Named):
     """A callable primitive that will return a call."""
 
     fmt: str | None = None

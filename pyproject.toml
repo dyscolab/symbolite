@@ -21,7 +21,7 @@ classifiers = [
 ]
 keywords = ["symbolic"]
 requires-python = ">=3.12"
-dependencies = ["typing_extensions"]
+dependencies = []
 
 [project.urls]
 homepage = "https://github.com/dyscolab/symbolite"

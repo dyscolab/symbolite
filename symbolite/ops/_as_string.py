@@ -1,4 +1,3 @@
-
 """
 symbolite.core.ops.as_function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -27,6 +26,7 @@ def as_string(expr: Any) -> str:
         symbolic expression.
     """
     return str(expr)
+
 
 @as_string.register(SymbolicNamespaceMeta)
 @as_string.register(SymbolicNamespace)

@@ -9,15 +9,16 @@ Yields all named structures inside a symbolic structure.
 """
 
 import types
+from collections.abc import Callable
 from functools import singledispatch
 from operator import attrgetter
-from typing import Any, Callable
+from typing import Any
 
 from ..abstract import Scalar, Symbol, Vector
 from ..abstract.symbol import UserFunction
 from ..core import (
-    Function,
     Expression,
+    Function,
     SymbolicNamespace,
     SymbolicNamespaceMeta,
     Unsupported,
@@ -37,12 +38,15 @@ def evaluate_impl(expr: Any, libsl: types.ModuleType) -> Any:
     """
     return expr
 
+
 @evaluate_impl.register
 def evaluate_impl_str(expr: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
     return attrgetter(expr)(libsl)
 
 
-def _evaluate_symbol_like(self: Symbol | Scalar | Vector, libsl: types.ModuleType) -> Any:
+def _evaluate_symbol_like(
+    self: Symbol | Scalar | Vector, libsl: types.ModuleType
+) -> Any:
     if self.expression is not None:
         return evaluate_impl(self.expression, libsl)
 
@@ -80,10 +84,10 @@ def _(self: Vector, libsl: types.ModuleType) -> Any:
     return _evaluate_symbol_like(self, libsl)
 
 
-
 @evaluate_impl.register
 def _(expr: Function, libsl: types.ModuleType) -> Any | Unsupported:
     return attrgetter(str(expr))(libsl)
+
 
 @evaluate_impl.register(SymbolicNamespaceMeta)
 @evaluate_impl.register(SymbolicNamespace)
@@ -110,6 +114,7 @@ def _(self: Expression, libsl: types.ModuleType) -> Any:
         except AttributeError:
             pass
         raise ex
+
 
 @evaluate_impl.register
 def _(self: UserFunction, libsl: types.ModuleType) -> Callable[..., Any]:

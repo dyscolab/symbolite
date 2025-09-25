@@ -9,8 +9,9 @@ Replace symbols, functions, values, etc by others.
 """
 
 import inspect
+from collections.abc import Mapping
 from functools import singledispatch
-from typing import Any, Mapping, cast
+from typing import Any, cast
 
 from ..abstract import Scalar, Symbol, Vector
 from ..core import Expression, SymbolicNamespace, SymbolicNamespaceMeta
@@ -28,6 +29,7 @@ def substitute(expr: Any, replacements: Mapping[Any, Any]) -> Any:
         replacement dictionary.
     """
     return replacements.get(expr, expr)
+
 
 def _substitute_named_expression(
     self: Symbol | Scalar | Vector,
@@ -58,6 +60,7 @@ def substitute_vector(self: Vector, mapper: Mapping[Any, Any]) -> Vector:
     out = _substitute_named_expression(self, mapper, Vector)
     return cast(Vector, out)
 
+
 @substitute.register
 def substitue_expression(self: Expression, mapper: Mapping[Any, Any]) -> Expression:
     func = mapper.get(self.func, self.func)
@@ -65,6 +68,7 @@ def substitue_expression(self: Expression, mapper: Mapping[Any, Any]) -> Express
     kwargs = {k: substitute(arg, mapper) for k, arg in self.kwargs_items}
 
     return Expression(func, args, tuple(kwargs.items()))
+
 
 @substitute.register(SymbolicNamespaceMeta)
 @substitute.register(SymbolicNamespace)

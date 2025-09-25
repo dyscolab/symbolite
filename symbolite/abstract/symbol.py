@@ -13,22 +13,12 @@ from __future__ import annotations
 import dataclasses
 import types
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Generic,
-    Literal,
-    ParamSpec,
-    TypeVar,
-    cast,
-)
+from collections.abc import Callable
+from typing import Any, Literal, ParamSpec, Self, cast
 
-from typing_extensions import Self
-
-from ..core import Function, Expression, NamedExpression
+from ..core import Expression, Function, NamedExpression
 
 P = ParamSpec("P")
-T = TypeVar("T")
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
@@ -237,10 +227,7 @@ class Symbol(NamedExpression):
         object.__setattr__(self, "name", name)
 
 
-S = TypeVar("S", bound=Symbol)
-
-
-def downcast(symbol_obj: Symbol, subclass: type[S]) -> S:
+def downcast[S: Symbol](symbol_obj: Symbol, subclass: type[S]) -> S:
     expr = symbol_obj.expression
     cast_expr = cast("Expression[S] | None", expr)
     return subclass(
@@ -280,7 +267,7 @@ class PythonFunction(Function[Symbol]):
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class UserFunction(PythonFunction, Generic[P, T]):
+class UserFunction[P, T](PythonFunction):
     _impls: dict[types.ModuleType | Literal["default"], Callable[P, T]] = (
         dataclasses.field(init=False, default_factory=dict)
     )
@@ -293,6 +280,7 @@ class UserFunction(PythonFunction, Generic[P, T]):
 
     def __repr__(self) -> str:
         from ..ops.util import repr_without_defaults
+
         return repr_without_defaults(self, include_private=False)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Symbol:

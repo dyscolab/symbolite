@@ -11,18 +11,19 @@ Symbolite core util functions.
 from __future__ import annotations
 
 import dataclasses
+from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Callable, Hashable, Iterator, Mapping, TypeVar
+from typing import TYPE_CHECKING, Any
 
 from .base import evaluate, inspect
-
-TH = TypeVar("TH", bound=Hashable)
 
 if TYPE_CHECKING:
     from ..core.named import Named
 
 
-def solve_dependencies(dependencies: Mapping[TH, set[TH]]) -> Iterator[set[TH]]:
+def solve_dependencies[TH: Hashable](
+    dependencies: Mapping[TH, set[TH]],
+) -> Iterator[set[TH]]:
     """Solve a dependency graph.
 
     Parameters
@@ -59,7 +60,7 @@ def solve_dependencies(dependencies: Mapping[TH, set[TH]]) -> Iterator[set[TH]]:
         yield t
 
 
-def compute_dependencies(
+def compute_dependencies[TH: Hashable](
     content: Mapping[TH, Any],
     is_dependency: Callable[[Any], bool],
 ) -> dict[TH, set[TH]]:
@@ -73,7 +74,7 @@ def compute_dependencies(
     return dependencies
 
 
-def substitute_content(
+def substitute_content[TH: Hashable](
     content: Mapping[TH, Any],
     *,
     is_dependency: Callable[[Any], bool],
@@ -90,7 +91,7 @@ def substitute_content(
     return out
 
 
-def eval_content(
+def eval_content[TH: Hashable](
     content: Mapping[TH, Any],
     *,
     libsl: ModuleType,

@@ -13,23 +13,19 @@ from __future__ import annotations
 
 import dataclasses
 import functools
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
-
-from typing_extensions import Self
+from typing import TYPE_CHECKING, Any, Self
 
 from .named import Named
 
 if TYPE_CHECKING:
     from .function import Function
 
-T_co = TypeVar("T_co", bound="NamedExpression")
-
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class Expression(Generic[T_co]):
+class Expression[T_co: "NamedExpression"]:
     """A Function that has been called with certain arguments."""
 
-    func: "Function[T_co]"
+    func: Function[T_co]
     args: tuple[Any, ...]
     kwargs_items: tuple[tuple[str, Any], ...] = ()
 

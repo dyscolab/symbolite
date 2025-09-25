@@ -12,7 +12,8 @@ from __future__ import annotations
 
 import dataclasses
 import warnings
-from typing import Any, Iterable, Mapping, Sequence, overload
+from collections.abc import Iterable, Mapping, Sequence
+from typing import Any, overload
 
 from ..core import NamedExpression
 from . import symbol
@@ -242,11 +243,17 @@ def vectorize(
 
 
 def vectorize(
-    expr: NumberT | Symbol | Scalar | Vector | Iterable[NumberT | Symbol | Scalar | Vector],
+    expr: NumberT
+    | Symbol
+    | Scalar
+    | Vector
+    | Iterable[NumberT | Symbol | Scalar | Vector],
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
     scalar_type: type[Scalar] = Scalar,
-) -> NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...]:
+) -> (
+    NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...]
+):
     """Vectorize expression by replacing scalar symbols
     by an array at a given indices.
 
@@ -275,6 +282,7 @@ def vectorize(
 
     reps = {scalar_type(name): arr[ndx] for ndx, name in it}
     from ..ops import substitute
+
     return substitute(expr, reps)
 
 
