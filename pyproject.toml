@@ -11,8 +11,6 @@ license = "MIT"
 classifiers = [
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "License :: OSI Approved :: MIT License",
@@ -22,7 +20,7 @@ classifiers = [
   "Topic :: Software Development :: Libraries",
 ]
 keywords = ["symbolic"]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = ["typing_extensions"]
 
 [project.urls]
@@ -63,8 +61,6 @@ dev = { features = ["test", "backends", "dev"], solve-group = "default" }
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 test = { features = ["test", "backends"], solve-group = "default" }
-test-py310 = ["test", "py310"]
-test-py311 = ["test", "py311"]
 test-py312 = ["test", "py312"]
 test-py313 = ["test", "py313"]
 
@@ -101,12 +97,6 @@ pytest-mypy-testing = "*"
 
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"
-
-[tool.pixi.feature.py310.dependencies]
-python = "3.10.*"
-
-[tool.pixi.feature.py311.dependencies]
-python = "3.11.*"
 
 [tool.pixi.feature.py312.dependencies]
 python = "3.12.*"
