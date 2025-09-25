@@ -13,7 +13,7 @@ import operator
 
 import jax.numpy as np
 
-from symbolite.core.util import Unsupported
+from symbolite.core import Unsupported
 
 op_getitem = operator.getitem
 

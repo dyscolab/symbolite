@@ -11,10 +11,7 @@ Provides name, namespace for other objects.
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, Generator
-
-from .operations import yield_named
-from .util import compare_namespace, repr_without_defaults
+from typing import Any
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
@@ -32,31 +29,8 @@ class Named:
         return self.name
 
     def __repr__(self) -> str:
+        from ..ops.util import repr_without_defaults
         return repr_without_defaults(self)
 
     def format(self, *args: Any, **kwargs: Any) -> str: ...
 
-
-def symbol_namespaces(self: Any) -> set[str]:
-    """Return a set of symbol libraries"""
-    return set(map(lambda s: s.namespace, yield_named(self, False)))
-
-
-def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
-    """Return a set of symbol names (with full namespace indication).
-
-    Parameters
-    ----------
-    namespace: str or None
-        If None, all symbols will be returned independently of the namespace.
-        If a string, will compare Symbol.namespace to that.
-        Defaults to "" which is the namespace for user defined symbols.
-    """
-    ff = compare_namespace(namespace)
-    return set(map(str, filter(ff, yield_named(self, False))))
-
-
-@yield_named.register
-def _(self: Named, include_anonymous: bool = False) -> Generator[Named, None, None]:
-    if include_anonymous or self.name is not None:
-        yield self

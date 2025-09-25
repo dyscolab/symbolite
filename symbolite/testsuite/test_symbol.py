@@ -1,16 +1,16 @@
 import pytest
 
 from symbolite import Symbol
-from symbolite.abstract.symbol import Function
+from symbolite.abstract.symbol import PythonFunction
 from symbolite.core.expression import Expression
-from symbolite.core.named import symbol_names
-from symbolite.core.operations import evaluate, substitute
 from symbolite.impl import find_module_in_stack
+from symbolite.ops import substitute
+from symbolite.ops.base import evaluate, symbol_names
 
 x, y, z = map(Symbol, "x y z".split())
 
-F = Function("F", arity=1)
-G = Function("G", arity=1)
+F = PythonFunction("F", arity=1)
+G = PythonFunction("G", arity=1)
 
 
 @pytest.mark.mypy_testing

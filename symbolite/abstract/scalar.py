@@ -13,8 +13,7 @@ from __future__ import annotations
 import dataclasses
 from typing import Any
 
-from ..core.function import BaseFunction
-from ..core.util import Unsupported
+from ..core import Function, Unsupported
 from . import symbol
 from .symbol import Symbol, downcast
 
@@ -155,7 +154,7 @@ class Scalar(Symbol):
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class ScalarFunction(BaseFunction):
+class ScalarFunction(Function):
     @property
     def output_type(self) -> type[Scalar]:
         return Scalar
@@ -241,4 +240,4 @@ pi = Scalar("pi", namespace="scalar")
 nan = Scalar("nan", namespace="scalar")
 tau = Scalar("tau", namespace="scalar")
 
-del BaseFunction, Symbol, dataclasses
+del Function, Symbol, dataclasses

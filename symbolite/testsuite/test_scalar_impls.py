@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 
-from symbolite.core.util import Unsupported
+from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
 
 all_impl = get_all_implementations()

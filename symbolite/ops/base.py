@@ -13,15 +13,10 @@ from __future__ import annotations
 import collections
 import types
 import warnings
-from functools import singledispatch
-from operator import attrgetter
-from typing import TYPE_CHECKING, Any, Callable, Generator, Iterable, Mapping
-
-from ..impl import find_module_in_stack
+from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
     from ..abstract import Symbol
-    from .named import Named
 
 
 def build_function_code(
@@ -56,71 +51,6 @@ def assign(lhs, rhs):
     return f"{lhs} = {rhs}"
 
 
-@singledispatch
-def as_string(expr: Any) -> str:
-    """Return the expression as a string.
-
-    Parameters
-    ----------
-    expr
-        symbolic expression.
-    """
-    return str(expr)
-
-
-@singledispatch
-def as_function_def(expr) -> str:
-    raise TypeError(f"Cannot build function definition for {type(expr)}")
-
-
-def as_function(
-    expr: Any,
-    libsl: types.ModuleType | None = None,
-) -> Callable[..., Any]:
-    """Converts the expression to a callable function.
-
-    Parameters
-    ----------
-    expr
-        symbolic expression.
-    libsl
-        implementation module.
-    """
-
-    function_def = as_function_def(expr)
-    lm = compile(function_def, libsl)
-
-    f = lm["f"]
-    f.__symbolite_def__ = function_def
-    return f
-
-
-@as_function_def.register(tuple)
-@as_function_def.register(list)
-def _(
-    expr: tuple[Any],
-) -> str:
-    return build_function_code(
-        "f",
-        map(str, free_symbols(expr)),
-        (assign(f"__return_{ndx}", str(el)) for ndx, el in enumerate(expr)),
-        map("__return_{}".format, range(len(expr))),
-    )
-
-
-@as_function_def.register(dict)
-def _(
-    expr: dict[str, Any],
-) -> str:
-    return build_function_code(
-        "f",
-        map(str, free_symbols(tuple(expr.values()))),
-        ["__return = {}"] + [assign(f"__return['{k}']", str(el)) for k, el in expr.items()],
-        [
-            "__return",
-        ],
-    )
-
 
 def compile(
     code: str,
@@ -135,6 +65,7 @@ def compile(
     libsl
         implementation module.
     """
+    from ..impl import find_module_in_stack
 
     if libsl is None:
         libsl = find_module_in_stack()
@@ -167,26 +98,13 @@ def inspect(expr: Any) -> dict[Any, int]:
     expr
         symbolic expression.
     """
-    from ..abstract.symbol import yield_named
+    from . import yield_named
 
     cnt = collections.Counter[Any](yield_named(expr))
     if cnt:
         return dict(cnt)
     return {expr: 1}
 
-
-@singledispatch
-def evaluate_impl(expr: Any, libsl: types.ModuleType) -> Any:
-    """Evaluate expression.
-
-    Parameters
-    ----------
-    expr
-        symbolic expression.
-    libsl
-        implementation module.
-    """
-    return expr
 
 
 def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
@@ -199,6 +117,8 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     libsl
         implementation module.
     """
+    from ..impl import find_module_in_stack
+    from . import evaluate_impl
 
     if libsl is None:
         libsl = find_module_in_stack()
@@ -209,38 +129,6 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     return evaluate_impl(expr, libsl)
 
 
-@singledispatch
-def substitute(expr: Any, replacements: Mapping[Any, Any]) -> Any:
-    """Replace symbols, functions, values, etc by others.
-
-    Parameters
-    ----------
-    expr
-        symbolic expression.
-    replacements
-        replacement dictionary.
-    """
-    return replacements.get(expr, expr)
-
-
-@evaluate_impl.register
-def evaluate_impl_str(expr: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
-    return attrgetter(expr)(libsl)
-
-
-@singledispatch
-def yield_named(
-    self: Any, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    return
-    yield Named()  # This is required to make it a generator.
-
-
-@yield_named.register(tuple)
-@yield_named.register(list)
-def _(expr: tuple[Any]) -> Generator[Named, None, None]:
-    for el in expr:
-        yield from yield_named(el)
 
 
 def is_free_symbol(obj: Any) -> bool:
@@ -250,9 +138,36 @@ def is_free_symbol(obj: Any) -> bool:
 
 
 def free_symbols(obj: Any) -> tuple[Symbol]:
+    from . import yield_named
+
     seen = []
     for el in filter(is_free_symbol, yield_named(obj)):
         if el not in seen:
             seen.append(el)
 
     return tuple(seen)
+
+
+def symbol_namespaces(self: Any) -> set[str]:
+    """Return a set of symbol libraries"""
+    from . import yield_named
+
+    return set(map(lambda s: s.namespace, yield_named(self, False)))
+
+
+def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
+    """Return a set of symbol names (with full namespace indication).
+
+    Parameters
+    ----------
+    namespace: str or None
+        If None, all symbols will be returned independently of the namespace.
+        If a string, will compare Symbol.namespace to that.
+        Defaults to "" which is the namespace for user defined symbols.
+    """
+    from . import yield_named
+    from .util import compare_namespace
+    
+    ff = compare_namespace(namespace)
+    return set(map(str, filter(ff, yield_named(self, False))))
+

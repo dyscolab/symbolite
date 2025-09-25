@@ -2,9 +2,10 @@ from typing import Any
 
 import pytest
 
-from symbolite import scalar, substitute
-from symbolite.core.util import eval_content, substitute_content
+from symbolite import scalar
 from symbolite.impl import libstd
+from symbolite.ops import substitute
+from symbolite.ops.util import eval_content, substitute_content
 
 
 class SimpleVariable(scalar.Scalar):

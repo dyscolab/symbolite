@@ -14,12 +14,12 @@ import dataclasses
 from types import ModuleType
 from typing import TYPE_CHECKING, Any, Callable, Hashable, Iterator, Mapping, TypeVar
 
-from .operations import evaluate, inspect, substitute
+from .base import evaluate, inspect
 
 TH = TypeVar("TH", bound=Hashable)
 
 if TYPE_CHECKING:
-    from .named import Named
+    from ..core.named import Named
 
 
 def solve_dependencies(dependencies: Mapping[TH, set[TH]]) -> Iterator[set[TH]]:
@@ -78,6 +78,8 @@ def substitute_content(
     *,
     is_dependency: Callable[[Any], bool],
 ) -> dict[TH, Any]:
+    from . import substitute
+
     dependencies = compute_dependencies(content, is_dependency)
     layers = solve_dependencies(dependencies)
     out: dict[TH, Any] = {}
@@ -109,6 +111,8 @@ def eval_content(
         callable that takes a python object/value and returns True
         if it should be considered as the dependency of another.
     """
+    from . import substitute
+
     dependencies = compute_dependencies(content, is_dependency)
     layers = solve_dependencies(dependencies)
 
@@ -147,7 +151,3 @@ def compare_namespace(namespace: str | None = "") -> Callable[[Named], bool]:
         return s.namespace == namespace
 
     return predicate
-
-
-class Unsupported(ValueError):
-    """Label unsupported"""

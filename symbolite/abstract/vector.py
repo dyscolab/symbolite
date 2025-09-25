@@ -13,11 +13,9 @@ from __future__ import annotations
 import dataclasses
 from typing import Any, Iterable, Mapping, Sequence, overload
 
-from ..core.named import symbol_names as _symbol_names
-from ..core.operations import substitute
 from . import symbol
 from .scalar import NumberT, Scalar
-from .symbol import BaseFunction, Symbol, downcast
+from .symbol import Function, Symbol, downcast
 
 VectorT = Iterable[NumberT]
 
@@ -156,7 +154,7 @@ class Vector(Symbol):
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class CumulativeFunction(BaseFunction):
+class CumulativeFunction(Function):
     namespace: str = "vector"
     arity: int = 1
 
@@ -232,6 +230,7 @@ def vectorize(
     arr = Vector(varname)
 
     reps = {scalar_type(name): arr[ndx] for ndx, name in it}
+    from ..ops import substitute
     return substitute(expr, reps)
 
 
@@ -281,6 +280,8 @@ def auto_vectorize(
     SymbolicExpression
         vectorized expression.
     """
+    from ..ops.base import symbol_names as _symbol_names
+
     if isinstance(expr, NumberT):
         return tuple(), expr
 

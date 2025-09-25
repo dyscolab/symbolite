@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 
-from ...core.util import Unsupported
+from symbolite.core import Unsupported
 
 # "gcd": None,  # 1 to ---
 # "hypot": None,  # 1 to ---

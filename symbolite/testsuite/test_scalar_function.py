@@ -4,9 +4,9 @@ import types
 import pytest
 
 from symbolite import Symbol, scalar
-from symbolite.core.named import symbol_names
-from symbolite.core.operations import as_function, evaluate, substitute
 from symbolite.impl import get_all_implementations
+from symbolite.ops import as_function, substitute
+from symbolite.ops.base import symbol_names, evaluate
 
 all_impl = get_all_implementations()
 

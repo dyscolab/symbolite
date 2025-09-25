@@ -1,7 +1,7 @@
 import pytest
 
 from symbolite import Scalar, scalar
-from symbolite.core.operations import as_string
+from symbolite.ops import as_string
 
 x, y, z = map(scalar.Scalar, "x y z".split())
 

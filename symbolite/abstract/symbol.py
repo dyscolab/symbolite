@@ -16,24 +16,15 @@ import warnings
 from typing import (
     Any,
     Callable,
-    Generator,
     Generic,
     Literal,
-    Mapping,
     ParamSpec,
     TypeVar,
 )
 
 from typing_extensions import Self
 
-from ..core.expression import Expression, NamedExpression
-from ..core.function import BaseFunction
-from ..core.named import Named, yield_named
-from ..core.operations import (
-    evaluate_impl,
-    substitute,
-)
-from ..core.util import Unsupported, repr_without_defaults
+from ..core import Function, Expression, NamedExpression
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -245,50 +236,6 @@ class Symbol(NamedExpression):
         object.__setattr__(self, "name", name)
 
 
-@yield_named.register
-def _(self: Symbol, include_anonymous: bool = False) -> Generator[Named, None, None]:
-    if self.expression is None:
-        if include_anonymous or self.name is not None:
-            yield self
-    else:
-        yield from yield_named(self.expression, include_anonymous)
-
-
-@substitute.register
-def _(self: Symbol, mapper: Mapping[Any, Any]) -> Symbol:
-    if self.expression is None:
-        return mapper.get(self, self)
-    out = substitute(self.expression, mapper)
-    if not isinstance(out, Expression):
-        return out
-    return self.__class__(name=self.name, namespace=self.namespace, expression=out)
-
-
-@evaluate_impl.register
-def _(self: Symbol, libsl: types.ModuleType) -> Any:
-    if self.expression is not None:
-        return evaluate_impl(self.expression, libsl)
-
-    if self.namespace:
-        name = str(self)
-
-        value = evaluate_impl(name, libsl)
-
-        if value is Unsupported:
-            raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
-
-        return value
-    else:
-        # User defined symbol, txry to map the class
-        name = f"{self.__class__.__module__.split('.')[-1]}.{self.__class__.__name__}"
-        f = evaluate_impl(name, libsl)
-
-        if f is Unsupported:
-            raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
-
-        return f(self.name)
-
-
 S = TypeVar("S", bound=Symbol)
 
 
@@ -320,7 +267,7 @@ def _add_parenthesis(
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class Function(BaseFunction):
+class PythonFunction(Function):
     @property
     def output_type(self) -> type[Symbol]:
         return Symbol
@@ -330,7 +277,7 @@ class Function(BaseFunction):
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class UserFunction(Function, Generic[P, T]):
+class UserFunction(PythonFunction, Generic[P, T]):
     _impls: dict[types.ModuleType | Literal["default"], Callable[P, T]] = (
         dataclasses.field(init=False, default_factory=dict)
     )
@@ -342,6 +289,7 @@ class UserFunction(Function, Generic[P, T]):
         return obj
 
     def __repr__(self) -> str:
+        from ..ops.util import repr_without_defaults
         return repr_without_defaults(self, include_private=False)
 
     def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Symbol:
@@ -351,21 +299,8 @@ class UserFunction(Function, Generic[P, T]):
         self._impls[libsl] = func
 
 
-@evaluate_impl.register
-def _(self: UserFunction, libsl: types.ModuleType) -> Callable[..., Any]:
-    impls = self._impls
-    if libsl in impls:
-        return impls[libsl]
-    elif "default" in impls:
-        return impls["default"]
-    else:
-        raise Exception(
-            f"No implementation found for {libsl.__name__} and no default implementation provided for function {self!s}"
-        )
-
-
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class UnaryFunction(Function):
+class UnaryFunction(PythonFunction):
     arity: int = 1
     precedence: int
 
@@ -379,7 +314,7 @@ class UnaryFunction(Function):
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class BinaryFunction(Function):
+class BinaryFunction(PythonFunction):
     arity: int = 2
     precedence: int
 
@@ -422,7 +357,7 @@ truediv = BinaryFunction("truediv", "symbol", precedence=1, fmt="{} / {}")
 floordiv = BinaryFunction("floordiv", "symbol", precedence=1, fmt="{} // {}")
 mod = BinaryFunction("mod", "symbol", precedence=1, fmt="{} % {}")
 pow = BinaryFunction("pow", "symbol", precedence=3, fmt="{} ** {}")
-pow3 = Function("pow3", "symbol", fmt="pow({}, {}, {})", arity=3)
+pow3 = PythonFunction("pow3", "symbol", fmt="pow({}, {}, {})", arity=3)
 lshift = BinaryFunction("lshift", "symbol", precedence=-1, fmt="{} << {}")
 rshift = BinaryFunction("rshift", "symbol", precedence=-1, fmt="{} >> {}")
 and_ = BinaryFunction("and_", "symbol", precedence=-2, fmt="{} & {}")

@@ -4,10 +4,10 @@ from typing import Any
 import pytest
 
 from symbolite import Symbol, scalar, vector
-from symbolite.core.named import symbol_names
-from symbolite.core.operations import evaluate, substitute
-from symbolite.core.util import Unsupported
+from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
+from symbolite.ops import substitute
+from symbolite.ops.base import evaluate, symbol_names
 
 all_impl = get_all_implementations()
 

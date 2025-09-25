@@ -11,21 +11,14 @@ Symbolic functions.
 from __future__ import annotations
 
 import dataclasses
-import types
-from operator import attrgetter
-from typing import (
-    Any,
-    Generator,
-)
+from typing import Any
 
 from .expression import Expression, NamedExpression
-from .named import Named, yield_named
-from .operations import evaluate_impl
-from .util import Unsupported
+from .named import Named
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class BaseFunction(Named):
+class Function(Named):
     """A callable primitive that will return a call."""
 
     fmt: str | None = None
@@ -58,14 +51,3 @@ class BaseFunction(Named):
         plain_args = args + tuple(f"{k}={v}" for k, v in kwargs.items())
         return f"{str(self)}({', '.join((str(v) for v in plain_args))})"
 
-
-@yield_named.register
-def _(
-    self: BaseFunction, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield self
-
-
-@evaluate_impl.register
-def _(expr: BaseFunction, libsl: types.ModuleType) -> Any | Unsupported:
-    return attrgetter(str(expr))(libsl)

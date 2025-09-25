@@ -3,10 +3,10 @@ import math
 import pytest
 
 from symbolite import Scalar, Symbol, scalar
-from symbolite.core.named import symbol_names
-from symbolite.core.operations import as_string, evaluate, substitute
 from symbolite.core.symbolgroup import SymbolicNamespace
 from symbolite.impl import libstd
+from symbolite.ops import as_string, substitute
+from symbolite.ops.base import evaluate, symbol_names
 
 
 def test_double_naming():
@@ -75,4 +75,17 @@ def test_eq():
         x = Scalar()
         y = Scalar()
 
-        x.eq(2 * y)
+        eq = x.eq(2 * y)
+
+    s = "\n".join(
+        [
+            "# N",
+            "",
+            "x = Scalar()",
+            "y = Scalar()",
+            "",
+            "eq = x == 2 * y"
+        ]
+    )
+
+    assert as_string(N) == s
