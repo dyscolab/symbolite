@@ -11,7 +11,7 @@ Yields all named structures inside a symbolic structure.
 from functools import singledispatch
 from typing import Any
 
-from ..abstract import Scalar, Symbol, Vector
+from ..abstract import Real, Symbol, Vector
 from ..core import NamedExpression, SymbolicNamespace, SymbolicNamespaceMeta
 from .base import assign, build_function_code, free_symbols
 
@@ -41,12 +41,12 @@ def _(
     return build_function_code(
         "f",
         map(str, free_symbols(tuple(expr.values()))),
-        ["__return = {}"] + [assign(f"__return['{k}']", str(el)) for k, el in expr.items()],
+        ["__return = {}"]
+        + [assign(f"__return['{k}']", str(el)) for k, el in expr.items()],
         [
             "__return",
         ],
     )
-
 
 
 @as_function_def.register(SymbolicNamespaceMeta)
@@ -59,7 +59,7 @@ def _(
     lines: list[str] = []
     for attr_name in dir(expr):
         attr = getattr(expr, attr_name)
-        if not isinstance(attr, (Symbol, Scalar, Vector)):
+        if not isinstance(attr, (Symbol, Real, Vector)):
             continue
 
         if attr.expression is not None:
@@ -73,7 +73,6 @@ def _(
             "__return",
         ],
     )
-
 
 
 @as_function_def.register

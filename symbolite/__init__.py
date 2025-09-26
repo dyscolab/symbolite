@@ -8,15 +8,15 @@ A minimal symbolic python package.
 :license: BSD, see LICENSE for more details.
 """
 
-from .abstract import Scalar, Symbol, Vector, scalar, vector
+from .abstract import Real, Symbol, Vector, real, vector
 from .abstract.symbol import UserFunction
 from .ops import substitute
 from .ops.base import evaluate
 
 __all__ = [
     "Symbol",
-    "Scalar",
-    "scalar",
+    "Real",
+    "real",
     "Vector",
     "vector",
     "UserFunction",

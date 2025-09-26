@@ -135,7 +135,7 @@ def test_symbol_names_namespace(expr: Symbol, result: Symbol):
     assert symbol_names(expr, namespace="lib") == result
 
 
-class Scalar(Symbol):
+class Real(Symbol):
     pass
 
 

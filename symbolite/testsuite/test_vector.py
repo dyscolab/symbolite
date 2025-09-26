@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from symbolite import Symbol, scalar, vector
+from symbolite import Symbol, real, vector
 from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
 from symbolite.ops import substitute
@@ -11,7 +11,7 @@ from symbolite.ops.base import evaluate, symbol_names
 
 all_impl = get_all_implementations()
 
-x, y = map(scalar.Scalar, ("x", "y"))
+x, y = map(real.Real, ("x", "y"))
 vec = vector.Vector("vec")
 v = vector.Vector("v")
 
@@ -29,9 +29,9 @@ def test_typing():
     reveal_type(v + 2)  # R: symbolite.abstract.vector.Vector # noqa: F821
     # reveal_type(v + xsy) # R: symbolite.abstract.vector.Vector # noqa: F821
     # reveal_type(xsy + v)  # R: symbolite.abstract.vector.Vector # noqa: F821
-    reveal_type(vec[0])  # R: symbolite.abstract.scalar.Scalar # noqa: F821
-    reveal_type(vec[x])  # R: symbolite.abstract.scalar.Scalar # noqa: F821
-    reveal_type(vector.sum(vec))  # R: symbolite.abstract.scalar.Scalar # noqa: F821
+    reveal_type(vec[0])  # R: symbolite.abstract.real.Real # noqa: F821
+    reveal_type(vec[x])  # R: symbolite.abstract.real.Real # noqa: F821
+    reveal_type(vector.sum(vec))  # R: symbolite.abstract.real.Real # noqa: F821
 
 
 def test_vector():
@@ -89,7 +89,7 @@ def test_impl_numpy():
     expr1 = vector.Vector("vec") + 1
     assert np.allclose(evaluate(substitute(expr1, {vec: v})), v + 1)
 
-    expr2 = scalar.cos(vector.sum(vector.Vector("vec")))
+    expr2 = real.cos(vector.sum(vector.Vector("vec")))
 
     assert np.allclose(
         evaluate(substitute(expr2, {vec: v}), libsl=libsl), np.cos(np.sum(v))
@@ -116,7 +116,7 @@ def test_impl_sympy():
     [
         (x + 2 * y, ("x", "y"), vec[0] + 2 * vec[1]),
         (x + 2 * y, ("y", "x"), vec[1] + 2 * vec[0]),
-        (x + 2 * scalar.cos(y), ("y", "x"), vec[1] + 2 * scalar.cos(vec[0])),
+        (x + 2 * real.cos(y), ("y", "x"), vec[1] + 2 * real.cos(vec[0])),
         (x + 2 * y, dict(x=3, y=5), vec[3] + 2 * vec[5]),
         (x + 2 * y, dict(x=5, y=3), vec[5] + 2 * vec[3]),
     ],
@@ -146,7 +146,7 @@ def test_vectorize_many():
     [
         (x + 2 * y, (("x", "y"), vec[0] + 2 * vec[1])),
         (y + 2 * x, (("x", "y"), vec[1] + 2 * vec[0])),
-        (x + 2 * scalar.cos(y), (("x", "y"), vec[0] + 2 * scalar.cos(vec[1]))),
+        (x + 2 * real.cos(y), (("x", "y"), vec[0] + 2 * real.cos(vec[1]))),
     ],
 )
 def test_autovectorize(expr: Symbol, result: Symbol):

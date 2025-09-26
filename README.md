@@ -62,7 +62,7 @@ In addition to the `Symbol` class, there is also a `Scalar` and `Vector` classes
 to represent integer, floats or complex numbers, and an array of those.
 
 ```python
->>> from symbolite import Scalar, Vector
+>>> from symbolite import real, Vector
 >>> x = Scalar("x")
 >>> y = Scalar("y")
 >>> v = Vector("v")
@@ -76,7 +76,7 @@ x + 3 * y
 Mathematical functions that operate on scalars are available in the `scalar` module.
 
 ```python
->>> from symbolite import scalar
+>>> from symbolite import real
 >>> expr3 = 3. * scalar.cos(0.5)
 >>> print(expr3)
 3.0 * scalar.cos(0.5)

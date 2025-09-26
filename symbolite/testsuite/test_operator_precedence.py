@@ -1,9 +1,9 @@
 import pytest
 
-from symbolite import Scalar, scalar
+from symbolite import Real, real
 from symbolite.ops import as_string
 
-x, y, z = map(scalar.Scalar, "x y z".split())
+x, y, z = map(real.Real, "x y z".split())
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,7 @@ x, y, z = map(scalar.Scalar, "x y z".split())
         ((-x) ** y, "(-x) ** y"),
     ],
 )
-def test_different_precedence(expr: Scalar, result: Scalar):
+def test_different_precedence(expr: Real, result: Real):
     assert as_string(expr) == result
     assert str(expr) == result
 
@@ -30,6 +30,6 @@ def test_different_precedence(expr: Scalar, result: Scalar):
         (x + (y + z), "x + (y + z)"),  # Python is not associative
     ],
 )
-def test_same_precedence(expr: Scalar, result: Scalar):
+def test_same_precedence(expr: Real, result: Real):
     assert as_string(expr) == result
     assert str(expr) == result

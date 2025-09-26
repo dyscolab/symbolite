@@ -13,7 +13,7 @@ from collections.abc import Mapping
 from functools import singledispatch
 from typing import Any, cast
 
-from ..abstract import Scalar, Symbol, Vector
+from ..abstract import Real, Symbol, Vector
 from ..core import Expression, SymbolicNamespace, SymbolicNamespaceMeta
 
 
@@ -32,9 +32,9 @@ def substitute(expr: Any, replacements: Mapping[Any, Any]) -> Any:
 
 
 def _substitute_named_expression(
-    self: Symbol | Scalar | Vector,
+    self: Symbol | Real | Vector,
     mapper: Mapping[Any, Any],
-    cls: type[Symbol | Scalar | Vector],
+    cls: type[Symbol | Real | Vector],
 ):
     if self.expression is None:
         return mapper.get(self, self)
@@ -50,9 +50,9 @@ def substitute_symbol(self: Symbol, mapper: Mapping[Any, Any]) -> Symbol:
 
 
 @substitute.register
-def substitute_scalar(self: Scalar, mapper: Mapping[Any, Any]) -> Scalar:
-    out = _substitute_named_expression(self, mapper, Scalar)
-    return cast(Scalar, out)
+def substitute_real(self: Real, mapper: Mapping[Any, Any]) -> Real:
+    out = _substitute_named_expression(self, mapper, Real)
+    return cast(Real, out)
 
 
 @substitute.register

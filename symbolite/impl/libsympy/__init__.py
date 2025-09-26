@@ -9,6 +9,6 @@ into values and functions defined in SymPy.
 :license: BSD, see LICENSE for more details.
 """
 
-from . import scalar, symbol, vector
+from . import real, symbol, vector
 
-__all__ = ["symbol", "scalar", "vector"]
+__all__ = ["symbol", "real", "vector"]

@@ -8,8 +8,8 @@ Abstract symbolite primitives.
 :license: BSD, see LICENSE for more details.
 """
 
-from .scalar import Scalar
+from .real import Real
 from .symbol import Symbol
 from .vector import Vector
 
-__all__ = ["Symbol", "Scalar", "Vector"]
+__all__ = ["Symbol", "Real", "Vector"]

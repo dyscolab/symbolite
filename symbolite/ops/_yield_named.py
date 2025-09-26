@@ -12,7 +12,7 @@ from collections.abc import Generator
 from functools import singledispatch
 from typing import Any
 
-from ..abstract import Scalar, Symbol, Vector
+from ..abstract import Real, Symbol, Vector
 from ..core import (
     Expression,
     Function,
@@ -47,7 +47,7 @@ def yield_named_named(
 
 
 def _yield_named_symbol_like(
-    self: Symbol | Scalar | Vector, include_anonymous: bool = False
+    self: Symbol | Real | Vector, include_anonymous: bool = False
 ) -> Generator[Named, None, None]:
     if self.expression is None:
         if include_anonymous or self.name is not None:
@@ -64,8 +64,8 @@ def yield_named_symbol(
 
 
 @yield_named.register
-def yield_named_scalar(
-    self: Scalar, include_anonymous: bool = False
+def yield_named_real(
+    self: Real, include_anonymous: bool = False
 ) -> Generator[Named, None, None]:
     yield from _yield_named_symbol_like(self, include_anonymous)
 

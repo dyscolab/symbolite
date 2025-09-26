@@ -14,7 +14,7 @@ from functools import singledispatch
 from operator import attrgetter
 from typing import Any
 
-from ..abstract import Scalar, Symbol, Vector
+from ..abstract import Real, Symbol, Vector
 from ..abstract.symbol import UserFunction
 from ..core import (
     Expression,
@@ -44,9 +44,7 @@ def evaluate_impl_str(expr: str, libsl: types.ModuleType) -> Any:  # | Unsupport
     return attrgetter(expr)(libsl)
 
 
-def _evaluate_symbol_like(
-    self: Symbol | Scalar | Vector, libsl: types.ModuleType
-) -> Any:
+def _evaluate_symbol_like(self: Symbol | Real | Vector, libsl: types.ModuleType) -> Any:
     if self.expression is not None:
         return evaluate_impl(self.expression, libsl)
 
@@ -75,7 +73,7 @@ def _(self: Symbol, libsl: types.ModuleType) -> Any:
 
 
 @evaluate_impl.register
-def _(self: Scalar, libsl: types.ModuleType) -> Any:
+def _(self: Real, libsl: types.ModuleType) -> Any:
     return _evaluate_symbol_like(self, libsl)
 
 

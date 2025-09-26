@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from symbolite import Scalar, Symbol, scalar
+from symbolite import Real, Symbol, real
 from symbolite.core.symbolgroup import SymbolicNamespace
 from symbolite.impl import libstd
 from symbolite.ops import as_string, substitute
@@ -31,10 +31,10 @@ def test_naming():
 
 def test_substitute_eval():
     class X(SymbolicNamespace):
-        x = Scalar()
-        y = Scalar()
+        x = Real()
+        y = Real()
         z = x + 2 * y
-        p = scalar.cos(z)
+        p = real.cos(z)
 
     Y = substitute(X, {X.x: 1, X.y: 2})
 
@@ -50,19 +50,19 @@ def test_substitute_eval():
 
 def test_as_str():
     class X(SymbolicNamespace):
-        x = Scalar()
-        y = Scalar()
+        x = Real()
+        y = Real()
         z = x + 2 * y
-        p = scalar.cos(z)
+        p = real.cos(z)
 
     s = "\n".join(
         [
             "# X",
             "",
-            "x = Scalar()",
-            "y = Scalar()",
+            "x = Real()",
+            "y = Real()",
             "",
-            "p = scalar.cos(x + 2 * y)",
+            "p = real.cos(x + 2 * y)",
             "z = x + 2 * y",
         ]
     )
@@ -72,20 +72,11 @@ def test_as_str():
 
 def test_eq():
     class N(SymbolicNamespace):
-        x = Scalar()
-        y = Scalar()
+        x = Real()
+        y = Real()
 
         eq = x.eq(2 * y)
 
-    s = "\n".join(
-        [
-            "# N",
-            "",
-            "x = Scalar()",
-            "y = Scalar()",
-            "",
-            "eq = x == 2 * y"
-        ]
-    )
+    s = "\n".join(["# N", "", "x = Real()", "y = Real()", "", "eq = x == 2 * y"])
 
     assert as_string(N) == s

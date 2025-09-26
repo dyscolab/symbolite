@@ -80,7 +80,7 @@ def compile(
         code,
         {
             "symbol": libsl.symbol,
-            "scalar": libsl.scalar,
+            "real": libsl.real,
             "vector": libsl.vector,
             **globals(),
         },
@@ -129,10 +129,10 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
 
 
 def is_free_symbol(obj: Any) -> bool:
-    from ..abstract import Scalar, Symbol, Vector
+    from ..abstract import Real, Symbol, Vector
 
     return (
-        isinstance(obj, (Symbol, Scalar, Vector))
+        isinstance(obj, (Symbol, Real, Vector))
         and obj.expression is None
         and obj.namespace == ""
     )

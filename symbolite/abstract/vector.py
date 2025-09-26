@@ -17,7 +17,7 @@ from typing import Any, overload
 
 from ..core import NamedExpression
 from . import symbol
-from .scalar import NumberT, Scalar
+from .real import NumberT, Real
 from .symbol import Function, Symbol, downcast
 
 VectorT = Iterable[NumberT]
@@ -45,8 +45,8 @@ class Vector(NamedExpression):
     def __ge__(self, other: Any) -> Symbol:
         return symbol.ge(self, other)
 
-    def __getitem__(self, key: int | Scalar) -> Scalar:
-        return downcast(symbol.getitem(self, key), Scalar)
+    def __getitem__(self, key: int | Real) -> Real:
+        return downcast(symbol.getitem(self, key), Real)
 
     def __getattr__(self, key: Any):
         raise AttributeError(key)
@@ -64,9 +64,9 @@ class Vector(NamedExpression):
         """Implements multiplication."""
         return downcast(symbol.mul(self, other), Vector)
 
-    def __matmul__(self, other: Vector) -> Scalar:
+    def __matmul__(self, other: Vector) -> Real:
         """Implements multiplication."""
-        return downcast(symbol.matmul(self, other), Scalar)
+        return downcast(symbol.matmul(self, other), Real)
 
     def __truediv__(self, other: Vector) -> Vector:
         """Implements true division."""
@@ -119,9 +119,9 @@ class Vector(NamedExpression):
         """Implements reflected multiplication."""
         return downcast(symbol.mul(other, self), Vector)
 
-    def __rmatmul__(self, other: Any) -> Scalar:
+    def __rmatmul__(self, other: Any) -> Real:
         """Implements reflected multiplication."""
-        return downcast(symbol.matmul(other, self), Scalar)
+        return downcast(symbol.matmul(other, self), Real)
 
     def __rtruediv__(self, other: Any) -> Vector:
         """Implements reflected true division."""
@@ -190,16 +190,16 @@ class Vector(NamedExpression):
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
-class CumulativeFunction(Function[Scalar]):
+class CumulativeFunction(Function[Real]):
     namespace: str = "vector"
     arity: int = 1
 
-    def __call__(self, arg1: Vector | VectorT) -> Scalar:
+    def __call__(self, arg1: Vector | VectorT) -> Real:
         return super()._call(arg1)  # type: ignore
 
     @property
     def output_type(self):
-        return Scalar
+        return Real
 
 
 sum = CumulativeFunction("sum", namespace="vector")
@@ -211,17 +211,17 @@ def vectorize(
     expr: NumberT,
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> NumberT: ...
 
 
 @overload
 def vectorize(
-    expr: Scalar,
+    expr: Real,
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
-) -> Scalar: ...
+    scalar_type: type[Real] = Real,
+) -> Real: ...
 
 
 @overload
@@ -229,7 +229,7 @@ def vectorize(
     expr: Symbol,
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> Symbol: ...
 
 
@@ -238,22 +238,16 @@ def vectorize(
     expr: Iterable[NumberT | Symbol],
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> tuple[NumberT | Symbol, ...]: ...
 
 
 def vectorize(
-    expr: NumberT
-    | Symbol
-    | Scalar
-    | Vector
-    | Iterable[NumberT | Symbol | Scalar | Vector],
+    expr: NumberT | Symbol | Real | Vector | Iterable[NumberT | Symbol | Real | Vector],
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
-) -> (
-    NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...]
-):
+    scalar_type: type[Real] = Real,
+) -> NumberT | Symbol | Real | Vector | tuple[NumberT | Symbol | Real | Vector, ...]:
     """Vectorize expression by replacing scalar symbols
     by an array at a given indices.
 
@@ -270,7 +264,7 @@ def vectorize(
     if isinstance(expr, NumberT):
         return expr
 
-    if not isinstance(expr, (Symbol, Scalar, Vector)):
+    if not isinstance(expr, (Symbol, Real, Vector)):
         return tuple(vectorize(symbol, symbol_names, varname) for symbol in expr)
 
     if isinstance(symbol_names, dict):
@@ -290,7 +284,7 @@ def vectorize(
 def auto_vectorize(
     expr: NumberT,
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], Symbol]: ...
 
 
@@ -298,7 +292,7 @@ def auto_vectorize(
 def auto_vectorize(
     expr: Symbol,
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], Symbol]: ...
 
 
@@ -306,17 +300,17 @@ def auto_vectorize(
 def auto_vectorize(
     expr: Iterable[Symbol],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], tuple[Symbol, ...]]: ...
 
 
 def auto_vectorize(
-    expr: NumberT | Symbol | Scalar | Vector | Iterable[Symbol | Scalar | Vector],
+    expr: NumberT | Symbol | Real | Vector | Iterable[Symbol | Real | Vector],
     varname: str = "vec",
-    scalar_type: type[Scalar] = Scalar,
+    scalar_type: type[Real] = Real,
 ) -> tuple[
     tuple[str, ...],
-    NumberT | Symbol | Scalar | Vector | tuple[NumberT | Symbol | Scalar | Vector, ...],
+    NumberT | Symbol | Real | Vector | tuple[NumberT | Symbol | Real | Vector, ...],
 ]:
     """Vectorize expression by replacing all test_scalar symbols
     by an array at a given indices. Symbols are ordered into
@@ -340,7 +334,7 @@ def auto_vectorize(
     if isinstance(expr, NumberT):
         return tuple(), expr
 
-    if not isinstance(expr, (Symbol, Scalar, Vector)):
+    if not isinstance(expr, (Symbol, Real, Vector)):
         expr = tuple(expr)
         out = set[str]()
         for symbol in expr:

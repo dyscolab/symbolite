@@ -11,7 +11,7 @@ Yields all named structures inside a symbolic structure.
 from functools import singledispatch
 from typing import Any
 
-from ..abstract import Scalar, Symbol, Vector
+from ..abstract import Real, Symbol, Vector
 from ..core import SymbolicNamespace, SymbolicNamespaceMeta
 from .base import assign, free_symbols
 
@@ -42,7 +42,7 @@ def _(self) -> str:
 
     for attr_name in dir(self):
         attr = getattr(self, attr_name)
-        if not isinstance(attr, (Symbol, Scalar, Vector)):
+        if not isinstance(attr, (Symbol, Real, Vector)):
             continue
 
         if attr.expression is not None:
