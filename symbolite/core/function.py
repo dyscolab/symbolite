@@ -11,7 +11,8 @@ Symbolic functions.
 from __future__ import annotations
 
 import dataclasses
-from typing import Any, cast
+import types
+from typing import Any, Callable, Literal, Self, cast
 
 from .expression import Expression, NamedExpression
 from .named import Named
@@ -23,6 +24,12 @@ class Function[R: NamedExpression](Named):
 
     fmt: str | None = None
     arity: int | None = None
+    result_cls: type[R]
+
+    def __str__(self) -> str:
+        from ..ops import as_string
+
+        return as_string(self)
 
     @property
     def output_type(self) -> type[R]:
@@ -30,7 +37,7 @@ class Function[R: NamedExpression](Named):
 
     def _call(self, *args: Any, **kwargs: Any) -> R:
         resolver = self._build_resolver(*args, **kwargs)
-        return cast(R, self.output_type(expression=resolver))
+        return self.result_cls(expression=resolver)
 
     def _build_resolver(self, *args: Any, **kwargs: Any) -> Expression[R]:
         if self.arity is None:
@@ -45,9 +52,72 @@ class Function[R: NamedExpression](Named):
             )
         return Expression(self, args)
 
-    def format(self, *args: Any, **kwargs: Any) -> str:
-        if self.fmt:
-            return self.fmt.format(*args, **kwargs)
 
-        plain_args = args + tuple(f"{k}={v}" for k, v in kwargs.items())
-        return f"{str(self)}({', '.join((str(v) for v in plain_args))})"
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class UnaryFunction[I, R: NamedExpression](Function[R]):
+    arity: int = 1
+
+    def __call__(self, arg1: I) -> R:
+        return super()._call(arg1)  # type: ignore
+
+
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class BinaryFunction[I, R: NamedExpression](Function[R]):
+    arity: int = 2
+
+    def __call__(self, arg1: I, arg2: I) -> R:
+        return super()._call(arg1, arg2)  # type: ignore
+
+
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class Function3[I, R: NamedExpression](Function[R]):
+    arity: int = 3
+
+    def __call__(self, arg1: I, arg2: I, arg3: I) -> R:
+        return super()._call(arg1, arg2, arg3)  # type: ignore
+
+
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class UnaryOperator[I, R: NamedExpression](Function[R]):
+    arity: int = 1
+    precedence: int
+
+    def __call__(self, arg1: I) -> R:
+        return self._call(arg1)
+
+
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class BinaryOperator[I, R: NamedExpression](Function[R]):
+    arity: int = 2
+    precedence: int
+
+    def __call__(self, arg1: I, arg2: I) -> R:
+        return self._call(arg1, arg2)
+
+
+@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
+class UserFunction[P, T, R: NamedExpression](Function[R]):
+    _impls: dict[types.ModuleType | Literal["default"], Callable[P, T]] = (
+        dataclasses.field(init=False, default_factory=dict)
+    )
+
+    @classmethod
+    def from_function(cls, func: Callable[P, T]) -> Self:
+        obj = cls(
+            name=func.__name__,
+            namespace="user",
+            result_cls=cast(type[R], NamedExpression),
+        )
+        obj._impls["default"] = func
+        return obj
+
+    def __repr__(self) -> str:
+        from ..ops.util import repr_without_defaults
+
+        return repr_without_defaults(self, include_private=False)
+
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R:
+        return self._call(*args, **kwargs)
+
+    def register_impl(self, func: Callable[P, T], libsl: types.ModuleType):
+        self._impls[libsl] = func

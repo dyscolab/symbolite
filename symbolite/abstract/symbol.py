@@ -11,14 +11,16 @@ Objects and functions for symbol operations.
 from __future__ import annotations
 
 import dataclasses
-import types
 import warnings
-from collections.abc import Callable
-from typing import Any, Literal, ParamSpec, Self, cast
+from typing import Any, cast
 
-from ..core import Expression, Function, NamedExpression
-
-P = ParamSpec("P")
+from ..core import Expression, NamedExpression
+from ..core.function import (
+    BinaryOperator,
+    Function3,
+    UnaryOperator,
+)
+from .boolean import Boolean
 
 
 @dataclasses.dataclass(frozen=True, repr=False)
@@ -50,26 +52,26 @@ class Symbol(NamedExpression):
     """
 
     # Comparison methods (not operator)
-    def eq(self, other: Any) -> Symbol:
+    def eq(self, other: Any) -> Boolean:
         return eq(self, other)
 
-    def ne(self, other: Any) -> Symbol:
+    def ne(self, other: Any) -> Boolean:
         return ne(self, other)
 
     # Comparison magic methods
-    def __lt__(self, other: Any) -> Symbol:
+    def __lt__(self, other: Any) -> Boolean:
         """Implements less than comparison using the < operator."""
         return lt(self, other)
 
-    def __le__(self, other: Any) -> Symbol:
+    def __le__(self, other: Any) -> Boolean:
         """Implements less than or equal comparison using the <= operator."""
         return le(self, other)
 
-    def __gt__(self, other: Any) -> Symbol:
+    def __gt__(self, other: Any) -> Boolean:
         """Implements greater than comparison using the > operator."""
         return gt(self, other)
 
-    def __ge__(self, other: Any) -> Symbol:
+    def __ge__(self, other: Any) -> Boolean:
         """Implements greater than or equal comparison using the >= operator."""
         return ge(self, other)
 
@@ -210,9 +212,11 @@ class Symbol(NamedExpression):
         return invert(self)
 
     def __str__(self) -> str:
+        from ..ops import as_string
+
         if self.expression is None:
             return super().__str__()
-        return str(self.expression)
+        return as_string(self.expression)
 
     # Naming in symbolic namespace
     def __set_name__(self, owner: Any, name: str):
@@ -237,125 +241,46 @@ def downcast[S: Symbol](symbol_obj: Symbol, subclass: type[S]) -> S:
     )
 
 
-def _add_parenthesis(
-    self: UnaryFunction | BinaryFunction,
-    arg: UnaryFunction | BinaryFunction | Symbol,
-    *,
-    right: bool,
-) -> str:
-    match arg:
-        case Symbol(
-            expression=Expression(
-                func=UnaryFunction(precedence=p) | BinaryFunction(precedence=p)
-            )
-        ):
-            if p < self.precedence or (right and p <= self.precedence):
-                return f"({arg})"
-        case _:
-            pass
-    return str(arg)
-
-
-@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class PythonFunction(Function[Symbol]):
-    @property
-    def output_type(self) -> type[Symbol]:
-        return Symbol
-
-    def __call__(self, *args: Any, **kwargs: Any) -> Symbol:
-        return self._call(*args, **kwargs)
-
-
-@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class UserFunction[P, T](PythonFunction):
-    _impls: dict[types.ModuleType | Literal["default"], Callable[P, T]] = (
-        dataclasses.field(init=False, default_factory=dict)
-    )
-
-    @classmethod
-    def from_function(cls, func: Callable[P, T]) -> Self:
-        obj = cls(name=func.__name__, namespace="user")
-        obj._impls["default"] = func
-        return obj
-
-    def __repr__(self) -> str:
-        from ..ops.util import repr_without_defaults
-
-        return repr_without_defaults(self, include_private=False)
-
-    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> Symbol:
-        return super().__call__(*args, **kwargs)
-
-    def register_impl(self, func: Callable[P, T], libsl: types.ModuleType):
-        self._impls[libsl] = func
-
-
-@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class UnaryFunction(PythonFunction):
-    arity: int = 1
-    precedence: int
-
-    def format(self, *args: Any, **kwargs: Any) -> str:
-        (x,) = args
-        x = _add_parenthesis(self, x, right=False)
-        return super().format(x)
-
-    def __call__(self, arg1: Symbol) -> Symbol:
-        return self._call(arg1)
-
-
-@dataclasses.dataclass(frozen=True, repr=False, kw_only=True)
-class BinaryFunction(PythonFunction):
-    arity: int = 2
-    precedence: int
-
-    @property
-    def output_type(self) -> type[Symbol]:
-        return Symbol
-
-    def format(self, *args: Any, **kwargs: Any) -> str:
-        x, y = args
-        x = _add_parenthesis(self, x, right=False)
-        y = _add_parenthesis(self, y, right=True)
-        return super().format(x, y)
-
-    def __call__(self, arg1: Symbol, arg2: Symbol) -> Symbol:
-        return self._call(arg1, arg2)
-
+CompOp = BinaryOperator[Any, Boolean]
+BinOp = BinaryOperator[Any, Symbol]
+BinFun = BinaryOperator[Any, Symbol]
+UnOp = UnaryOperator[Symbol, Symbol]
 
 # Comparison methods (not operator)
-eq = BinaryFunction("eq", "symbol", precedence=-5, fmt="{} == {}")
-ne = BinaryFunction("ne", "symbol", precedence=-5, fmt="{} != {}")
+eq = CompOp("eq", "symbol", precedence=-5, fmt="{} == {}", result_cls=Boolean)
+ne = CompOp("ne", "symbol", precedence=-5, fmt="{} != {}", result_cls=Boolean)
 
 # Comparison
-lt = BinaryFunction("lt", "symbol", precedence=-5, fmt="{} < {}")
-le = BinaryFunction("le", "symbol", precedence=-5, fmt="{} <= {}")
-gt = BinaryFunction("gt", "symbol", precedence=-5, fmt="{} > {}")
-ge = BinaryFunction("ge", "symbol", precedence=-5, fmt="{} >= {}")
+lt = CompOp("lt", "symbol", precedence=-5, fmt="{} < {}", result_cls=Boolean)
+le = CompOp("le", "symbol", precedence=-5, fmt="{} <= {}", result_cls=Boolean)
+gt = CompOp("gt", "symbol", precedence=-5, fmt="{} > {}", result_cls=Boolean)
+ge = CompOp("ge", "symbol", precedence=-5, fmt="{} >= {}", result_cls=Boolean)
 
 # Emulating container types
-getitem = BinaryFunction("getitem", "symbol", precedence=5, fmt="{}[{}]")
+getitem = BinOp("getitem", "symbol", precedence=5, fmt="{}[{}]", result_cls=Symbol)
 
 # Emulating attribute
-symgetattr = BinaryFunction("symgetattr", "symbol", precedence=5, fmt="{}.{}")
+symgetattr = BinOp("symgetattr", "symbol", precedence=5, fmt="{}.{}", result_cls=Symbol)
 
 # Emulating numeric types
-add = BinaryFunction("add", "symbol", precedence=0, fmt="{} + {}")
-sub = BinaryFunction("sub", "symbol", precedence=0, fmt="{} - {}")
-mul = BinaryFunction("mul", "symbol", precedence=1, fmt="{} * {}")
-matmul = BinaryFunction("matmul", "symbol", precedence=1, fmt="{} @ {}")
-truediv = BinaryFunction("truediv", "symbol", precedence=1, fmt="{} / {}")
-floordiv = BinaryFunction("floordiv", "symbol", precedence=1, fmt="{} // {}")
-mod = BinaryFunction("mod", "symbol", precedence=1, fmt="{} % {}")
-pow = BinaryFunction("pow", "symbol", precedence=3, fmt="{} ** {}")
-pow3 = PythonFunction("pow3", "symbol", fmt="pow({}, {}, {})", arity=3)
-lshift = BinaryFunction("lshift", "symbol", precedence=-1, fmt="{} << {}")
-rshift = BinaryFunction("rshift", "symbol", precedence=-1, fmt="{} >> {}")
-and_ = BinaryFunction("and_", "symbol", precedence=-2, fmt="{} & {}")
-xor = BinaryFunction("xor", "symbol", precedence=-3, fmt="{} ^ {}")
-or_ = BinaryFunction("or_", "symbol", precedence=-4, fmt="{} | {}")
+add = BinOp("add", "symbol", precedence=0, fmt="{} + {}", result_cls=Symbol)
+sub = BinOp("sub", "symbol", precedence=0, fmt="{} - {}", result_cls=Symbol)
+mul = BinOp("mul", "symbol", precedence=1, fmt="{} * {}", result_cls=Symbol)
+matmul = BinOp("matmul", "symbol", precedence=1, fmt="{} @ {}", result_cls=Symbol)
+truediv = BinOp("truediv", "symbol", precedence=1, fmt="{} / {}", result_cls=Symbol)
+floordiv = BinOp("floordiv", "symbol", precedence=1, fmt="{} // {}", result_cls=Symbol)
+mod = BinOp("mod", "symbol", precedence=1, fmt="{} % {}", result_cls=Symbol)
+pow = BinOp("pow", "symbol", precedence=3, fmt="{} ** {}", result_cls=Symbol)
+pow3 = Function3[Symbol, Symbol](
+    "pow3", "symbol", fmt="pow({}, {}, {})", arity=3, result_cls=Symbol
+)
+lshift = BinOp("lshift", "symbol", precedence=-1, fmt="{} << {}", result_cls=Symbol)
+rshift = BinOp("rshift", "symbol", precedence=-1, fmt="{} >> {}", result_cls=Symbol)
+and_ = BinOp("and_", "symbol", precedence=-2, fmt="{} & {}", result_cls=Symbol)
+xor = BinOp("xor", "symbol", precedence=-3, fmt="{} ^ {}", result_cls=Symbol)
+or_ = BinOp("or_", "symbol", precedence=-4, fmt="{} | {}", result_cls=Symbol)
 
 # Unary operators
-neg = UnaryFunction("neg", "symbol", precedence=2, fmt="-{}")
-pos = UnaryFunction("pos", "symbol", precedence=2, fmt="+{}")
-invert = UnaryFunction("invert", "symbol", precedence=2, fmt="~{}")
+neg = UnOp("neg", "symbol", precedence=2, fmt="-{}", result_cls=Symbol)
+pos = UnOp("pos", "symbol", precedence=2, fmt="+{}", result_cls=Symbol)
+invert = UnOp("invert", "symbol", precedence=2, fmt="~{}", result_cls=Symbol)

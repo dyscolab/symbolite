@@ -17,9 +17,8 @@ x, y, z = map(real.Real, "x y z".split())
         ((-x) ** y, "(-x) ** y"),
     ],
 )
-def test_different_precedence(expr: Real, result: Real):
+def test_different_precedence(expr: Real, result: str):
     assert as_string(expr) == result
-    assert str(expr) == result
 
 
 @pytest.mark.parametrize(
@@ -30,6 +29,5 @@ def test_different_precedence(expr: Real, result: Real):
         (x + (y + z), "x + (y + z)"),  # Python is not associative
     ],
 )
-def test_same_precedence(expr: Real, result: Real):
+def test_same_precedence(expr: Real, result: str):
     assert as_string(expr) == result
-    assert str(expr) == result

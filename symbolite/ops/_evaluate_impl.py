@@ -9,13 +9,13 @@ Yields all named structures inside a symbolic structure.
 """
 
 import types
-from collections.abc import Callable
 from functools import singledispatch
 from operator import attrgetter
 from typing import Any
 
+from symbolite.core.expression import NamedExpression
+
 from ..abstract import Real, Symbol, Vector
-from ..abstract.symbol import UserFunction
 from ..core import (
     Expression,
     Function,
@@ -23,6 +23,7 @@ from ..core import (
     SymbolicNamespaceMeta,
     Unsupported,
 )
+from ..core.function import UserFunction
 
 
 @singledispatch
@@ -115,13 +116,20 @@ def _(self: Expression, libsl: types.ModuleType) -> Any:
 
 
 @evaluate_impl.register
-def _(self: UserFunction, libsl: types.ModuleType) -> Callable[..., Any]:
-    impls = self._impls
+def _(obj: UserFunction, libsl: types.ModuleType) -> Any:
+    impls = obj._impls
     if libsl in impls:
         return impls[libsl]
     elif "default" in impls:
         return impls["default"]
     else:
         raise Exception(
-            f"No implementation found for {libsl.__name__} and no default implementation provided for function {self!s}"
+            f"No implementation found for {libsl.__name__} and no default implementation provided for function {obj!s}"
         )
+
+
+@evaluate_impl.register
+def _(obj: NamedExpression, libsl: types.ModuleType) -> str:
+    if obj.expression is None:
+        raise
+    return evaluate_impl(obj.expression, libsl)

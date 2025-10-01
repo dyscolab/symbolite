@@ -1,16 +1,19 @@
+from typing import Any
+
 import pytest
 
 from symbolite import Symbol
-from symbolite.abstract.symbol import PythonFunction
 from symbolite.core.expression import Expression
+from symbolite.core.function import UnaryFunction
 from symbolite.impl import find_module_in_stack
 from symbolite.ops import substitute
+from symbolite.ops._as_string import as_string
 from symbolite.ops.base import evaluate, symbol_names
 
 x, y, z = map(Symbol, "x y z".split())
 
-F = PythonFunction("F", arity=1)
-G = PythonFunction("G", arity=1)
+F: UnaryFunction[Any, Symbol] = UnaryFunction("F", arity=1, result_cls=Symbol)
+G: UnaryFunction[Any, Symbol] = UnaryFunction("G", arity=1, result_cls=Symbol)
 
 
 @pytest.mark.mypy_testing
@@ -79,7 +82,7 @@ def test_forward_reverse():
     ],
 )
 def test_str(expr: Symbol, result: Symbol):
-    assert str(expr) == result
+    assert as_string(expr) == result
 
 
 @pytest.mark.parametrize(

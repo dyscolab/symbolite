@@ -3,6 +3,7 @@ import types
 import pytest
 
 from symbolite import UserFunction, evaluate
+from symbolite.core.expression import NamedExpression
 from symbolite.impl import get_all_implementations
 
 all_impl = get_all_implementations()
@@ -32,4 +33,11 @@ def f_1_2(x):
 def test_user_functions(func, args, result, libsl: types.ModuleType):
     uf = UserFunction.from_function(func)
 
-    assert evaluate(uf(*args), libsl) == result
+    value = uf(*args)
+
+    assert isinstance(value, NamedExpression)
+    assert value.expression is not None
+    assert value.expression.func is uf
+    assert value.expression.args == args
+    assert evaluate(value.expression.func, libsl) is func
+    assert evaluate(value, libsl) == result

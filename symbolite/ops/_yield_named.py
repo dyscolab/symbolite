@@ -12,6 +12,9 @@ from collections.abc import Generator
 from functools import singledispatch
 from typing import Any
 
+from symbolite.abstract.boolean import Boolean
+from symbolite.core.expression import NamedExpression
+
 from ..abstract import Real, Symbol, Vector
 from ..core import (
     Expression,
@@ -46,35 +49,15 @@ def yield_named_named(
         yield self
 
 
-def _yield_named_symbol_like(
-    self: Symbol | Real | Vector, include_anonymous: bool = False
+@yield_named.register
+def yield_named_symbol_like(
+    self: Symbol | Real | Vector | Boolean, include_anonymous: bool = False
 ) -> Generator[Named, None, None]:
     if self.expression is None:
         if include_anonymous or self.name is not None:
             yield self
     else:
         yield from yield_named(self.expression, include_anonymous)
-
-
-@yield_named.register
-def yield_named_symbol(
-    self: Symbol, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield from _yield_named_symbol_like(self, include_anonymous)
-
-
-@yield_named.register
-def yield_named_real(
-    self: Real, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield from _yield_named_symbol_like(self, include_anonymous)
-
-
-@yield_named.register
-def yield_named_vector(
-    self: Vector, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield from _yield_named_symbol_like(self, include_anonymous)
 
 
 @yield_named.register
@@ -98,10 +81,18 @@ def yield_named_expression(
         yield from yield_named(v, include_anonymous)
 
 
-# In Python 3.10 UnionTypes are not supported by singledispatch.register
-@yield_named.register(SymbolicNamespaceMeta)
-@yield_named.register(SymbolicNamespace)
-def _(self, include_anonymous: bool = False) -> Generator[Named, None, None]:
+@yield_named.register
+def yield_named_named_expression(
+    self: NamedExpression, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
+    yield from yield_named_named(self, include_anonymous)
+    yield from yield_named(self.expression, include_anonymous)
+
+
+@yield_named.register
+def _(
+    self: SymbolicNamespaceMeta | SymbolicNamespace, include_anonymous: bool = False
+) -> Generator[Named, None, None]:
     assert isinstance(self, (SymbolicNamespace, SymbolicNamespaceMeta))
     for name in dir(self):
         if name.startswith("__"):

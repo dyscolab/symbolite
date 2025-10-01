@@ -9,7 +9,7 @@ A minimal symbolic python package.
 """
 
 from .abstract import Real, Symbol, Vector, real, vector
-from .abstract.symbol import UserFunction
+from .core.function import UserFunction
 from .ops import substitute
 from .ops.base import evaluate
 

@@ -20,17 +20,13 @@ class Named:
     namespace: str = ""
 
     def __str__(self) -> str:
-        if self.name is None:
-            return "<anonymous>"
+        from ..ops import as_string
 
-        if self.namespace:
-            return self.namespace + "." + self.name
-
-        return self.name
+        return as_string(self)
 
     def __repr__(self) -> str:
         from ..ops.util import repr_without_defaults
+
         return repr_without_defaults(self)
 
     def format(self, *args: Any, **kwargs: Any) -> str: ...
-

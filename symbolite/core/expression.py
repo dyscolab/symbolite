@@ -37,13 +37,15 @@ class Expression[T_co: "NamedExpression"]:
     def kwargs(self) -> dict[str, Any]:
         return dict(self.kwargs_items)
 
-    def __str__(self) -> str:
-        return self.func.format(*self.args, *self.kwargs)
-
     def __repr__(self) -> str:
         from ..ops.util import repr_without_defaults
 
         return repr_without_defaults(self)
+
+    def __str__(self) -> str:
+        from ..ops import as_string
+
+        return as_string(self)
 
 
 @dataclasses.dataclass(frozen=True, repr=False, kw_only=True)

@@ -16,9 +16,10 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, overload
 
 from ..core import NamedExpression
+from ..core.function import Function
 from . import symbol
 from .real import NumberT, Real
-from .symbol import Function, Symbol, downcast
+from .symbol import Symbol, downcast
 
 VectorT = Iterable[NumberT]
 
@@ -173,9 +174,11 @@ class Vector(NamedExpression):
         return downcast(symbol.invert(self), Vector)
 
     def __str__(self) -> str:
+        from ..ops import as_string
+
         if self.expression is None:
             return super().__str__()
-        return str(self.expression)
+        return as_string(self.expression)
 
     def __set_name__(self, owner: Any, name: str):
         if name.endswith("__return"):
@@ -202,8 +205,8 @@ class CumulativeFunction(Function[Real]):
         return Real
 
 
-sum = CumulativeFunction("sum", namespace="vector")
-prod = CumulativeFunction("prod", namespace="vector")
+sum = CumulativeFunction("sum", namespace="vector", result_cls=Real)
+prod = CumulativeFunction("prod", namespace="vector", result_cls=Real)
 
 
 @overload
@@ -235,7 +238,7 @@ def vectorize(
 
 @overload
 def vectorize(
-    expr: Iterable[NumberT | Symbol],
+    expr: Iterable[NumberT | Symbol | Real],
     symbol_names: Sequence[str] | Mapping[str, int],
     varname: str = "vec",
     scalar_type: type[Real] = Real,
@@ -290,7 +293,7 @@ def auto_vectorize(
 
 @overload
 def auto_vectorize(
-    expr: Symbol,
+    expr: Symbol | Real,
     varname: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], Symbol]: ...
@@ -298,7 +301,7 @@ def auto_vectorize(
 
 @overload
 def auto_vectorize(
-    expr: Iterable[Symbol],
+    expr: Iterable[Symbol | Real],
     varname: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], tuple[Symbol, ...]]: ...
