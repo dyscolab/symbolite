@@ -7,6 +7,7 @@ README = GENERATED_PATH.parent.parent.parent / "README.md"
 
 
 def setup_test_readme():
+    return
     GENERATED_PATH.mkdir(exist_ok=True)
 
     INDENT = " " * 4

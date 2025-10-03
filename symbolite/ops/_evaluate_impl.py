@@ -13,44 +13,55 @@ from functools import singledispatch
 from operator import attrgetter
 from typing import Any
 
-from symbolite.core.expression import NamedExpression
-
-from ..abstract import Real, Symbol, Vector
 from ..core import (
-    Expression,
-    Function,
     SymbolicNamespace,
     SymbolicNamespaceMeta,
     Unsupported,
 )
-from ..core.function import UserFunction
+from ..core.call import CallInfo
+from ..core.function import FunctionInfo, OperatorInfo, UserFunction
+from ..core.symbolite_object import SymboliteObject, get_symbolite_info
+from ..core.variable import Name, Variable
+from ._get_name import get_name
 
 
 @singledispatch
-def evaluate_impl(expr: Any, libsl: types.ModuleType) -> Any:
+def evaluate_impl(obj: Any, libsl: types.ModuleType) -> Any:
     """Evaluate expression.
 
     Parameters
     ----------
-    expr
+    obj
         symbolic expression.
     libsl
         implementation module.
     """
-    return expr
+    return obj
 
 
 @evaluate_impl.register
-def evaluate_impl_str(expr: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
-    return attrgetter(expr)(libsl)
+def evaluate_impl_str(obj: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
+    return attrgetter(obj)(libsl)
 
 
-def _evaluate_symbol_like(self: Symbol | Real | Vector, libsl: types.ModuleType) -> Any:
-    if self.expression is not None:
-        return evaluate_impl(self.expression, libsl)
+@evaluate_impl.register(SymboliteObject)
+def evaluate_impl_symbolite_object(
+    obj: SymboliteObject[Any], libsl: types.ModuleType
+) -> Any:
+    info = get_symbolite_info(obj)
+    return evaluate_impl(info, libsl)
 
-    if self.namespace:
-        name = str(self)
+
+@evaluate_impl.register(Variable)
+def evaluate_variable(obj: Variable[Any], libsl: types.ModuleType) -> Any:
+    info = get_symbolite_info(obj)
+    if not isinstance(info.value, Name):
+        return evaluate_impl(info.value, libsl)
+
+    symbol_name, namespace = info.value.name, info.value.namespace
+
+    if namespace:
+        name = get_name(obj, qualified=True)
         value = evaluate_impl(name, libsl)
 
         if value is Unsupported:
@@ -59,51 +70,43 @@ def _evaluate_symbol_like(self: Symbol | Real | Vector, libsl: types.ModuleType)
         return value
 
     # User defined symbol, try to map the class
-    name = f"{self.__class__.__module__.split('.')[-1]}.{self.__class__.__name__}"
+    name = f"{obj.__class__.__module__.split('.')[-1]}.{obj.__class__.__name__}"
     f = evaluate_impl(name, libsl)
 
     if f is Unsupported:
         raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
 
-    return f(self.name)
+    return f(symbol_name)
 
 
-@evaluate_impl.register
-def _(self: Symbol, libsl: types.ModuleType) -> Any:
-    return _evaluate_symbol_like(self, libsl)
+@evaluate_impl.register(FunctionInfo)
+def _(obj: FunctionInfo[Any], libsl: types.ModuleType) -> Any | Unsupported:
+    attr_name = f"{obj.namespace}.{obj.name}"
+    return attrgetter(attr_name)(libsl)
 
 
-@evaluate_impl.register
-def _(self: Real, libsl: types.ModuleType) -> Any:
-    return _evaluate_symbol_like(self, libsl)
-
-
-@evaluate_impl.register
-def _(self: Vector, libsl: types.ModuleType) -> Any:
-    return _evaluate_symbol_like(self, libsl)
-
-
-@evaluate_impl.register
-def _(expr: Function, libsl: types.ModuleType) -> Any | Unsupported:
-    return attrgetter(str(expr))(libsl)
+@evaluate_impl.register(OperatorInfo)
+def _(obj: OperatorInfo[Any], libsl: types.ModuleType) -> Any | Unsupported:
+    attr_name = f"{obj.namespace}.{obj.name}"
+    return attrgetter(attr_name)(libsl)
 
 
 @evaluate_impl.register(SymbolicNamespaceMeta)
 @evaluate_impl.register(SymbolicNamespace)
-def _(self, libsl: types.ModuleType) -> Any:
-    assert isinstance(self, (SymbolicNamespace, SymbolicNamespaceMeta))
+def _(obj: SymbolicNamespace | SymbolicNamespaceMeta, libsl: types.ModuleType) -> Any:
+    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
     return {
-        attr_name: evaluate_impl(getattr(self, attr_name), libsl)
-        for attr_name in dir(self)
+        attr_name: evaluate_impl(getattr(obj, attr_name), libsl)
+        for attr_name in dir(obj)
         if not attr_name.startswith("__")
     }
 
 
-@evaluate_impl.register
-def _(self: Expression, libsl: types.ModuleType) -> Any:
-    func = evaluate_impl(self.func, libsl)
-    args = tuple(evaluate_impl(arg, libsl) for arg in self.args)
-    kwargs = {k: evaluate_impl(arg, libsl) for k, arg in self.kwargs_items}
+@evaluate_impl.register(CallInfo)
+def _(obj: CallInfo, libsl: types.ModuleType) -> Any:
+    func = evaluate_impl(obj.func, libsl)
+    args = tuple(evaluate_impl(arg, libsl) for arg in obj.args)
+    kwargs = {k: evaluate_impl(arg, libsl) for k, arg in obj.kwargs_items}
 
     try:
         return func(*args, **kwargs)
@@ -115,8 +118,8 @@ def _(self: Expression, libsl: types.ModuleType) -> Any:
         raise ex
 
 
-@evaluate_impl.register
-def _(obj: UserFunction, libsl: types.ModuleType) -> Any:
+@evaluate_impl.register(UserFunction)
+def _(obj: UserFunction[Any, Any, Any], libsl: types.ModuleType) -> Any:
     impls = obj._impls
     if libsl in impls:
         return impls[libsl]
@@ -126,10 +129,3 @@ def _(obj: UserFunction, libsl: types.ModuleType) -> Any:
         raise Exception(
             f"No implementation found for {libsl.__name__} and no default implementation provided for function {obj!s}"
         )
-
-
-@evaluate_impl.register
-def _(obj: NamedExpression, libsl: types.ModuleType) -> str:
-    if obj.expression is None:
-        raise
-    return evaluate_impl(obj.expression, libsl)

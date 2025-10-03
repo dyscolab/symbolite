@@ -6,7 +6,7 @@ import pytest
 from symbolite import Symbol, real, vector
 from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
-from symbolite.ops import substitute
+from symbolite.ops import as_code, substitute
 from symbolite.ops.base import evaluate, symbol_names
 
 all_impl = get_all_implementations()
@@ -22,21 +22,18 @@ requires_sympy = pytest.mark.skipif("libsympy" not in all_impl, reason="Requires
 
 
 @pytest.mark.mypy_testing
-# noqa: F821
 def test_typing():
     reveal_type(v + v)  # R: symbolite.abstract.vector.Vector # noqa: F821
     reveal_type(2 + v)  # R: symbolite.abstract.vector.Vector # noqa: F821
     reveal_type(v + 2)  # R: symbolite.abstract.vector.Vector # noqa: F821
-    # reveal_type(v + xsy) # R: symbolite.abstract.vector.Vector # noqa: F821
-    # reveal_type(xsy + v)  # R: symbolite.abstract.vector.Vector # noqa: F821
     reveal_type(vec[0])  # R: symbolite.abstract.real.Real # noqa: F821
     reveal_type(vec[x])  # R: symbolite.abstract.real.Real # noqa: F821
     reveal_type(vector.sum(vec))  # R: symbolite.abstract.real.Real # noqa: F821
 
 
 def test_vector():
-    assert str(vec) == "vec"
-    assert str(vec[1]) == "vec[1]"
+    assert as_code(vec) == "vec"
+    assert as_code(vec[1]) == "vec[1]"
 
 
 def test_methods():
@@ -121,7 +118,7 @@ def test_impl_sympy():
         (x + 2 * y, dict(x=5, y=3), vec[5] + 2 * vec[3]),
     ],
 )
-def test_vectorize(expr: vector.Vector, params: Any, result: Symbol):
+def test_vectorize(expr: real.Real, params: Any, result: real.Real):
     assert vector.vectorize(expr, params) == result
 
 
@@ -149,7 +146,7 @@ def test_vectorize_many():
         (x + 2 * real.cos(y), (("x", "y"), vec[0] + 2 * real.cos(vec[1]))),
     ],
 )
-def test_autovectorize(expr: Symbol, result: Symbol):
+def test_autovectorize(expr: real.Real, result: real.Real):
     assert vector.auto_vectorize(expr) == result
 
 

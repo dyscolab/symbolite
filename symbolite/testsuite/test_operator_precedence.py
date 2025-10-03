@@ -1,7 +1,7 @@
 import pytest
 
 from symbolite import Real, real
-from symbolite.ops import as_string
+from symbolite.ops import as_code
 
 x, y, z = map(real.Real, "x y z".split())
 
@@ -18,7 +18,7 @@ x, y, z = map(real.Real, "x y z".split())
     ],
 )
 def test_different_precedence(expr: Real, result: str):
-    assert as_string(expr) == result
+    assert as_code(expr) == result
 
 
 @pytest.mark.parametrize(
@@ -30,4 +30,4 @@ def test_different_precedence(expr: Real, result: str):
     ],
 )
 def test_same_precedence(expr: Real, result: str):
-    assert as_string(expr) == result
+    assert as_code(expr) == result

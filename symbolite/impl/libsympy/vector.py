@@ -13,7 +13,7 @@ import operator
 
 import sympy as sy
 
-op_getitem = operator.getitem
+getitem = operator.getitem
 
 sum = sum
 prod = sy.prod

@@ -14,7 +14,7 @@ import operator
 
 from symbolite.core import Unsupported
 
-op_getitem = operator.getitem
+getitem = operator.getitem
 
 sum = math.fsum
 prod = math.prod

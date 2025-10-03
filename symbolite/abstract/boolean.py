@@ -1,8 +1,8 @@
 """
-symbolite.abstract.symbol
-~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.abstract.boolean
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Objects and functions for symbol operations.
+Objects and functions for boolean operations.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.
@@ -10,16 +10,17 @@ Objects and functions for symbol operations.
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Self
 
-from ..core import NamedExpression
+from ..core import Variable
 from ..core.function import BinaryOperator
 
 
-@dataclasses.dataclass(frozen=True, repr=False)
-class Boolean(NamedExpression):
-    """Boolean symbolic expression."""
+class Boolean(Variable[bool]):
+    """Boolean symbolic variable.
+
+    See Symbol and Variable for more information.
+    """
 
     def __and__(self, other: Self) -> Boolean:
         """Implements bitwise and using the & operator."""
@@ -46,8 +47,10 @@ class Boolean(NamedExpression):
         return xor(other, self)
 
 
-BinOp = BinaryOperator[Boolean, Boolean]
+BinOp = BinaryOperator[Boolean, Boolean, Boolean]
 
-and_ = BinOp("and_", "boolean", precedence=-2, fmt="{} & {}", result_cls=Boolean)
-xor = BinOp("xor", "boolean", precedence=-3, fmt="{} ^ {}", result_cls=Boolean)
-or_ = BinOp("or_", "boolean", precedence=-4, fmt="{} | {}", result_cls=Boolean)
+and_ = BinOp("and_", "boolean", precedence=-2, fmt="{} & {}", output_type=Boolean)
+xor = BinOp("xor", "boolean", precedence=-3, fmt="{} ^ {}", output_type=Boolean)
+or_ = BinOp("or_", "boolean", precedence=-4, fmt="{} | {}", output_type=Boolean)
+
+del BinOp

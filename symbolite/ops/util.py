@@ -10,15 +10,11 @@ Symbolite core util functions.
 
 from __future__ import annotations
 
-import dataclasses
 from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import ModuleType
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
-from .base import evaluate, inspect
-
-if TYPE_CHECKING:
-    from ..core.named import Named
+from .base import count_named, evaluate
 
 
 def solve_dependencies[TH: Hashable](
@@ -66,7 +62,7 @@ def compute_dependencies[TH: Hashable](
 ) -> dict[TH, set[TH]]:
     dependencies: dict[TH, set[TH]] = {}
     for k, v in content.items():
-        contents = inspect(v)
+        contents = count_named(v)
         if contents == {k: 1}:
             dependencies[k] = set()
         else:
@@ -123,32 +119,3 @@ def eval_content[TH: Hashable](
             out[item] = evaluate(substitute(content[item], out), libsl)
 
     return out
-
-
-def repr_without_defaults(
-    dataclass_instance: Any, *, include_private: bool = True
-) -> str:
-    """Generate dataclass representation, skipping fields with default values."""
-    if not dataclasses.is_dataclass(dataclass_instance):
-        return repr(dataclass_instance)
-
-    include: dict[str, str] = {}
-    for field in dataclasses.fields(dataclass_instance):
-        if not include_private and field.name.startswith("_"):
-            continue
-        value = getattr(dataclass_instance, field.name)
-        if field.default is dataclasses.MISSING or field.default != value:
-            include[field.name] = repr(value)
-
-    args_repr = (f"{k}={v}" for k, v in include.items())
-    return f"{dataclass_instance.__class__.__name__}({', '.join(args_repr)})"
-
-
-def compare_namespace(namespace: str | None = "") -> Callable[[Named], bool]:
-    # TODO improve include_anonymous
-    def predicate(s: Named) -> bool:
-        if namespace is None:
-            return True
-        return s.namespace == namespace
-
-    return predicate

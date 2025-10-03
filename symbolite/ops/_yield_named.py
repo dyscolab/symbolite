@@ -12,90 +12,77 @@ from collections.abc import Generator
 from functools import singledispatch
 from typing import Any
 
-from symbolite.abstract.boolean import Boolean
-from symbolite.core.expression import NamedExpression
-
-from ..abstract import Real, Symbol, Vector
 from ..core import (
-    Expression,
+    Call,
     Function,
-    Named,
     SymbolicNamespace,
     SymbolicNamespaceMeta,
+    Variable,
 )
+from ..core.function import Operator
+from ..core.symbolite_object import SymboliteObject, get_symbolite_info
+from ..core.variable import Name
 
 
 @singledispatch
-def yield_named(
-    self: Any, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
+def yield_named(obj: Any) -> Generator[SymboliteObject[Any], None, None]:
     """Yields all named structures inside a symbolic structure."""
     return
-    yield Named()  # This is required to make it a generator.
+    yield SymboliteObject()  # This is required to make it a generator.
 
 
 @yield_named.register(tuple)
 @yield_named.register(list)
-def yield_named_tuple(expr: tuple[Any]) -> Generator[Named, None, None]:
-    for el in expr:
+def yield_named_tuple(obj: tuple[Any]) -> Generator[SymboliteObject[Any], None, None]:
+    for el in obj:
         yield from yield_named(el)
 
 
-@yield_named.register
-def yield_named_named(
-    self: Named, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    if include_anonymous or self.name is not None:
-        yield self
+@yield_named.register(SymboliteObject)
+def yield_named_symbolite_object(
+    obj: SymboliteObject[Any],
+) -> Generator[SymboliteObject[Any], None, None]:
+    info = get_symbolite_info(obj)
+    yield from yield_named(info)
 
 
-@yield_named.register
-def yield_named_symbol_like(
-    self: Symbol | Real | Vector | Boolean, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    if self.expression is None:
-        if include_anonymous or self.name is not None:
-            yield self
+@yield_named.register(Variable)
+def yield_named_variable(
+    obj: Variable[Any],
+) -> Generator[SymboliteObject[Any], None, None]:
+    info = get_symbolite_info(obj)
+    if isinstance(info.value, Name):
+        yield obj
     else:
-        yield from yield_named(self.expression, include_anonymous)
+        yield from yield_named(info.value)
 
 
-@yield_named.register
+@yield_named.register(Function | Operator)
 def yield_named_base_function(
-    self: Function, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield self
+    obj: Function[Any] | Operator[Any],
+) -> Generator[SymboliteObject[Any], None, None]:
+    yield obj
 
 
 @yield_named.register
-def yield_named_expression(
-    self: Expression, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    if include_anonymous or self.func.name is not None:
-        yield self.func
+def yield_named_call(obj: Call) -> Generator[SymboliteObject[Any], None, None]:
+    info = get_symbolite_info(obj)
+    yield from yield_named(info.func)
+    for arg in info.args:
+        yield from yield_named(arg)
 
-    for arg in self.args:
-        yield from yield_named(arg, include_anonymous)
-
-    for _, v in self.kwargs_items:
-        yield from yield_named(v, include_anonymous)
-
-
-@yield_named.register
-def yield_named_named_expression(
-    self: NamedExpression, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    yield from yield_named_named(self, include_anonymous)
-    yield from yield_named(self.expression, include_anonymous)
+    for _, v in info.kwargs_items:
+        yield from yield_named(v)
 
 
 @yield_named.register
 def _(
-    self: SymbolicNamespaceMeta | SymbolicNamespace, include_anonymous: bool = False
-) -> Generator[Named, None, None]:
-    assert isinstance(self, (SymbolicNamespace, SymbolicNamespaceMeta))
-    for name in dir(self):
+    obj: SymbolicNamespaceMeta | SymbolicNamespace,
+) -> Generator[SymboliteObject[Any], None, None]:
+    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
+    for name in dir(obj):
         if name.startswith("__"):
             continue
-        attr = getattr(self, name)
-        yield from yield_named(attr, include_anonymous)
+        attr = getattr(obj, name)
+        if isinstance(attr, SymboliteObject):
+            yield from yield_named(attr)

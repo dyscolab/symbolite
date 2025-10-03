@@ -14,10 +14,11 @@ import collections
 import types
 import warnings
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Any
+from typing import Any, Callable
 
-if TYPE_CHECKING:
-    from ..abstract import Symbol
+from ..core.symbolite_object import get_symbolite_info
+from ..core.variable import Name, Variable
+from ._get_name import get_name, get_namespace
 
 
 def build_function_code(
@@ -89,21 +90,21 @@ def compile(
     return lm
 
 
-def inspect(expr: Any) -> dict[Any, int]:
+def count_named(obj: Any) -> dict[Any, int]:
     """Inspect an expression and return what is there
     and how many times.
 
     Parameters
     ----------
-    expr
+    obj
         symbolic expression.
     """
     from . import yield_named
 
-    cnt = collections.Counter[Any](yield_named(expr))
+    cnt = collections.Counter[Any](yield_named(obj))
     if cnt:
         return dict(cnt)
-    return {expr: 1}
+    return {obj: 1}
 
 
 def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
@@ -128,21 +129,21 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     return evaluate_impl(expr, libsl)
 
 
-def is_free_symbol(obj: Any) -> bool:
-    from ..abstract import Real, Symbol, Vector
+def is_free_variable(obj: Any) -> bool:
+    from ..core.variable import Variable
 
-    return (
-        isinstance(obj, (Symbol, Real, Vector))
-        and obj.expression is None
-        and obj.namespace == ""
-    )
+    if not isinstance(obj, Variable):
+        return False
+
+    info = get_symbolite_info(obj)
+    return isinstance(info.value, Name) and info.value.namespace == ""
 
 
-def free_symbols(obj: Any) -> tuple[Symbol]:
+def free_variables(obj: Any) -> tuple[Variable[Any], ...]:
     from . import yield_named
 
-    seen = []
-    for el in filter(is_free_symbol, yield_named(obj)):
+    seen: list[Any] = []
+    for el in filter(is_free_variable, yield_named(obj)):
         if el not in seen:
             seen.append(el)
 
@@ -153,7 +154,14 @@ def symbol_namespaces(self: Any) -> set[str]:
     """Return a set of symbol libraries"""
     from . import yield_named
 
-    return set(map(lambda s: s.namespace, yield_named(self, False)))
+    return {get_name(s).namespace for s in yield_named(self)}
+
+
+def compare_namespace(namespace: str) -> Callable[[Any], bool]:
+    def _inner(obj: Any) -> bool:
+        return get_namespace(obj) == namespace
+
+    return _inner
 
 
 def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
@@ -167,7 +175,10 @@ def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
         Defaults to "" which is the namespace for user defined symbols.
     """
     from . import yield_named
-    from .util import compare_namespace
 
-    ff = compare_namespace(namespace)
-    return set(map(str, filter(ff, yield_named(self, False))))
+    if namespace is None:
+        return set(map(get_name, yield_named(self)))
+    else:
+        return set(
+            map(get_name, filter(compare_namespace(namespace), yield_named(self)))
+        )

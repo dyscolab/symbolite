@@ -10,6 +10,9 @@ Groups of symbols and symbolic expressions.
 
 from __future__ import annotations
 
+# class StatementList(list[Statement]):
+#     pass
+
 
 # This is necessary to use singledispatch on classes.
 class SymbolicNamespaceMeta(type):
@@ -18,5 +21,3 @@ class SymbolicNamespaceMeta(type):
 
 class SymbolicNamespace(metaclass=SymbolicNamespaceMeta):
     pass
-
-

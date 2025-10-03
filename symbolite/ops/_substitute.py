@@ -11,75 +11,57 @@ Replace symbols, functions, values, etc by others.
 import inspect
 from collections.abc import Mapping
 from functools import singledispatch
-from typing import Any, cast
+from typing import Any
 
-from ..abstract import Real, Symbol, Vector
-from ..core import Expression, SymbolicNamespace, SymbolicNamespaceMeta
+from ..core import Call, SymbolicNamespace, SymbolicNamespaceMeta
+from ..core.symbolite_object import get_symbolite_info
+from ..core.variable import Name, Variable
 
 
 @singledispatch
-def substitute(expr: Any, replacements: Mapping[Any, Any]) -> Any:
+def substitute(obj: Any, replacements: Mapping[Any, Any]) -> Any:
     """Replace symbols, functions, values, etc by others.
 
     Parameters
     ----------
-    expr
+    obj
         symbolic expression.
     replacements
         replacement dictionary.
     """
-    return replacements.get(expr, expr)
+    return replacements.get(obj, obj)
 
 
-def _substitute_named_expression(
-    self: Symbol | Real | Vector,
-    mapper: Mapping[Any, Any],
-    cls: type[Symbol | Real | Vector],
-):
-    if self.expression is None:
-        return mapper.get(self, self)
-    out = substitute(self.expression, mapper)
-    if not isinstance(out, Expression):
-        return out
-    return cls(name=self.name, namespace=self.namespace, expression=out)
+@substitute.register(Variable)
+def substitute_variable[R: Variable[Any]](obj: R, mapper: Mapping[Any, Any]) -> R:
+    info = get_symbolite_info(obj)
+    if isinstance(info.value, Name):
+        return mapper.get(obj, obj)
+    return obj.__class__(substitute(info.value, mapper))
 
 
 @substitute.register
-def substitute_symbol(self: Symbol, mapper: Mapping[Any, Any]) -> Symbol:
-    return _substitute_named_expression(self, mapper, self.__class__)
+def substitue_call(obj: Call, mapper: Mapping[Any, Any]) -> Call:
+    info = get_symbolite_info(obj)
+    func = mapper.get(info.func, info.func)
+    args = tuple(substitute(arg, mapper) for arg in info.args)
+    kwargs = {k: substitute(arg, mapper) for k, arg in info.kwargs_items}
 
-
-@substitute.register
-def substitute_real(self: Real, mapper: Mapping[Any, Any]) -> Real:
-    out = _substitute_named_expression(self, mapper, Real)
-    return cast(Real, out)
-
-
-@substitute.register
-def substitute_vector(self: Vector, mapper: Mapping[Any, Any]) -> Vector:
-    out = _substitute_named_expression(self, mapper, Vector)
-    return cast(Vector, out)
-
-
-@substitute.register
-def substitue_expression(self: Expression, mapper: Mapping[Any, Any]) -> Expression:
-    func = mapper.get(self.func, self.func)
-    args = tuple(substitute(arg, mapper) for arg in self.args)
-    kwargs = {k: substitute(arg, mapper) for k, arg in self.kwargs_items}
-
-    return Expression(func, args, tuple(kwargs.items()))
+    return Call(func, args, tuple(kwargs.items()))
 
 
 @substitute.register(SymbolicNamespaceMeta)
 @substitute.register(SymbolicNamespace)
-def _(self, replacements: Mapping[Any, Any]) -> Any:
-    assert isinstance(self, (SymbolicNamespace, SymbolicNamespaceMeta))
+def _(
+    obj: SymbolicNamespace | SymbolicNamespaceMeta, replacements: Mapping[Any, Any]
+) -> Any:
+    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
 
     d = {}
-    for attr_name in dir(self):
+    for attr_name in dir(obj):
         if attr_name.startswith("__"):
             continue
-        attr = getattr(self, attr_name)
+        attr = getattr(obj, attr_name)
         d[attr_name] = substitute(attr, replacements)
 
-    return type(self.__name__, inspect.getmro(self), d)
+    return type(obj.__name__, inspect.getmro(obj), d)

@@ -10,11 +10,9 @@ Objects and functions for symbol operations.
 
 from __future__ import annotations
 
-import dataclasses
-import warnings
-from typing import Any, cast
+from typing import Any
 
-from ..core import Expression, NamedExpression
+from ..core import Variable
 from ..core.function import (
     BinaryOperator,
     Function3,
@@ -23,10 +21,8 @@ from ..core.function import (
 from .boolean import Boolean
 
 
-@dataclasses.dataclass(frozen=True, repr=False)
-class Symbol(NamedExpression):
-    """Base class for objects that might operate with others using
-    python operators that map to magic methods
+class Symbol(Variable[Any]):
+    """General purpose symbolic variable.
 
     The following magic methods are not mapped to symbolite Functions
       - __hash__, __eq__, __ne__ collides with reasonble use of comparisons
@@ -49,6 +45,7 @@ class Symbol(NamedExpression):
     Also, magic methods that are statements (not expressions) are also not
     mapped: e.g. __setitem__ or __delitem__
 
+    See Variable for more information.
     """
 
     # Comparison methods (not operator)
@@ -211,76 +208,47 @@ class Symbol(NamedExpression):
         """Implements behavior for inversion using the ~ operator."""
         return invert(self)
 
-    def __str__(self) -> str:
-        from ..ops import as_string
 
-        if self.expression is None:
-            return super().__str__()
-        return as_string(self.expression)
-
-    # Naming in symbolic namespace
-    def __set_name__(self, owner: Any, name: str):
-        if name.endswith("__return"):
-            return
-        current_name = getattr(self, "name", None)
-        if current_name is not None and current_name != name:
-            warnings.warn(
-                f"Mismatched names in attribute {name}: {type(self)} is named {current_name}"
-            )
-
-        object.__setattr__(self, "name", name)
-
-
-def downcast[S: Symbol](symbol_obj: Symbol, subclass: type[S]) -> S:
-    expr = symbol_obj.expression
-    cast_expr = cast("Expression[S] | None", expr)
-    return subclass(
-        name=symbol_obj.name,
-        namespace=symbol_obj.namespace,
-        expression=cast_expr,
-    )
-
-
-CompOp = BinaryOperator[Any, Boolean]
-BinOp = BinaryOperator[Any, Symbol]
-BinFun = BinaryOperator[Any, Symbol]
+CompOp = BinaryOperator[Any, Any, Boolean]
+BinOp = BinaryOperator[Any, Any, Symbol]
+BinFun = BinaryOperator[Any, Any, Symbol]
 UnOp = UnaryOperator[Symbol, Symbol]
 
 # Comparison methods (not operator)
-eq = CompOp("eq", "symbol", precedence=-5, fmt="{} == {}", result_cls=Boolean)
-ne = CompOp("ne", "symbol", precedence=-5, fmt="{} != {}", result_cls=Boolean)
+eq = CompOp("eq", "symbol", precedence=-5, fmt="{} == {}", output_type=Boolean)
+ne = CompOp("ne", "symbol", precedence=-5, fmt="{} != {}", output_type=Boolean)
 
 # Comparison
-lt = CompOp("lt", "symbol", precedence=-5, fmt="{} < {}", result_cls=Boolean)
-le = CompOp("le", "symbol", precedence=-5, fmt="{} <= {}", result_cls=Boolean)
-gt = CompOp("gt", "symbol", precedence=-5, fmt="{} > {}", result_cls=Boolean)
-ge = CompOp("ge", "symbol", precedence=-5, fmt="{} >= {}", result_cls=Boolean)
+lt = CompOp("lt", "symbol", precedence=-5, fmt="{} < {}", output_type=Boolean)
+le = CompOp("le", "symbol", precedence=-5, fmt="{} <= {}", output_type=Boolean)
+gt = CompOp("gt", "symbol", precedence=-5, fmt="{} > {}", output_type=Boolean)
+ge = CompOp("ge", "symbol", precedence=-5, fmt="{} >= {}", output_type=Boolean)
 
 # Emulating container types
-getitem = BinOp("getitem", "symbol", precedence=5, fmt="{}[{}]", result_cls=Symbol)
+getitem = BinOp("getitem", "symbol", precedence=5, fmt="{}[{}]", output_type=Symbol)
 
 # Emulating attribute
-symgetattr = BinOp("symgetattr", "symbol", precedence=5, fmt="{}.{}", result_cls=Symbol)
+symgetattr = BinOp(
+    "symgetattr", "symbol", precedence=5, fmt="{}.{}", output_type=Symbol
+)
 
 # Emulating numeric types
-add = BinOp("add", "symbol", precedence=0, fmt="{} + {}", result_cls=Symbol)
-sub = BinOp("sub", "symbol", precedence=0, fmt="{} - {}", result_cls=Symbol)
-mul = BinOp("mul", "symbol", precedence=1, fmt="{} * {}", result_cls=Symbol)
-matmul = BinOp("matmul", "symbol", precedence=1, fmt="{} @ {}", result_cls=Symbol)
-truediv = BinOp("truediv", "symbol", precedence=1, fmt="{} / {}", result_cls=Symbol)
-floordiv = BinOp("floordiv", "symbol", precedence=1, fmt="{} // {}", result_cls=Symbol)
-mod = BinOp("mod", "symbol", precedence=1, fmt="{} % {}", result_cls=Symbol)
-pow = BinOp("pow", "symbol", precedence=3, fmt="{} ** {}", result_cls=Symbol)
-pow3 = Function3[Symbol, Symbol](
-    "pow3", "symbol", fmt="pow({}, {}, {})", arity=3, result_cls=Symbol
-)
-lshift = BinOp("lshift", "symbol", precedence=-1, fmt="{} << {}", result_cls=Symbol)
-rshift = BinOp("rshift", "symbol", precedence=-1, fmt="{} >> {}", result_cls=Symbol)
-and_ = BinOp("and_", "symbol", precedence=-2, fmt="{} & {}", result_cls=Symbol)
-xor = BinOp("xor", "symbol", precedence=-3, fmt="{} ^ {}", result_cls=Symbol)
-or_ = BinOp("or_", "symbol", precedence=-4, fmt="{} | {}", result_cls=Symbol)
+add = BinOp("add", "symbol", precedence=0, fmt="{} + {}", output_type=Symbol)
+sub = BinOp("sub", "symbol", precedence=0, fmt="{} - {}", output_type=Symbol)
+mul = BinOp("mul", "symbol", precedence=1, fmt="{} * {}", output_type=Symbol)
+matmul = BinOp("matmul", "symbol", precedence=1, fmt="{} @ {}", output_type=Symbol)
+truediv = BinOp("truediv", "symbol", precedence=1, fmt="{} / {}", output_type=Symbol)
+floordiv = BinOp("floordiv", "symbol", precedence=1, fmt="{} // {}", output_type=Symbol)
+mod = BinOp("mod", "symbol", precedence=1, fmt="{} % {}", output_type=Symbol)
+pow = BinOp("pow", "symbol", precedence=3, fmt="{} ** {}", output_type=Symbol)
+pow3 = Function3[Symbol, Symbol]("pow3", "symbol", output_type=Symbol)
+lshift = BinOp("lshift", "symbol", precedence=-1, fmt="{} << {}", output_type=Symbol)
+rshift = BinOp("rshift", "symbol", precedence=-1, fmt="{} >> {}", output_type=Symbol)
+and_ = BinOp("and_", "symbol", precedence=-2, fmt="{} & {}", output_type=Symbol)
+xor = BinOp("xor", "symbol", precedence=-3, fmt="{} ^ {}", output_type=Symbol)
+or_ = BinOp("or_", "symbol", precedence=-4, fmt="{} | {}", output_type=Symbol)
 
 # Unary operators
-neg = UnOp("neg", "symbol", precedence=2, fmt="-{}", result_cls=Symbol)
-pos = UnOp("pos", "symbol", precedence=2, fmt="+{}", result_cls=Symbol)
-invert = UnOp("invert", "symbol", precedence=2, fmt="~{}", result_cls=Symbol)
+neg = UnOp("neg", "symbol", precedence=2, fmt="-{}", output_type=Symbol)
+pos = UnOp("pos", "symbol", precedence=2, fmt="+{}", output_type=Symbol)
+invert = UnOp("invert", "symbol", precedence=2, fmt="~{}", output_type=Symbol)

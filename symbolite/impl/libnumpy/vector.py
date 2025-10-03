@@ -15,7 +15,9 @@ import numpy as np
 
 from symbolite.core import Unsupported
 
-op_getitem = operator.getitem
+getitem = operator.getitem
+
+add = np.add
 
 sum = np.sum
 prod = np.prod

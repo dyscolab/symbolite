@@ -3,17 +3,18 @@ from typing import Any
 import pytest
 
 from symbolite import Symbol
-from symbolite.core.expression import Expression
+from symbolite.core.call import Call
 from symbolite.core.function import UnaryFunction
+from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.impl import find_module_in_stack
 from symbolite.ops import substitute
-from symbolite.ops._as_string import as_string
+from symbolite.ops._as_code import as_code
 from symbolite.ops.base import evaluate, symbol_names
 
 x, y, z = map(Symbol, "x y z".split())
 
-F: UnaryFunction[Any, Symbol] = UnaryFunction("F", arity=1, result_cls=Symbol)
-G: UnaryFunction[Any, Symbol] = UnaryFunction("G", arity=1, result_cls=Symbol)
+F: UnaryFunction[Any, Symbol] = UnaryFunction("F", output_type=Symbol)
+G: UnaryFunction[Any, Symbol] = UnaryFunction("G", output_type=Symbol)
 
 
 @pytest.mark.mypy_testing
@@ -24,16 +25,18 @@ def test_typing():
     reveal_type(x + 2)  # R: symbolite.abstract.symbol.Symbol # noqa: F821
 
 
-def test_forward_reverse():
-    expr = x + 1
-    assert isinstance(expr.expression, Expression)
-    assert expr.expression.func.name == "add"
-    assert expr.expression.args == (x, 1)
+def _helper_forward_reverse(expr: Symbol) -> tuple[Any, ...]:
+    expr_info = get_symbolite_info(expr)
+    assert isinstance(expr_info.value, Call)
+    call_info = get_symbolite_info(expr_info.value)
+    func_info = get_symbolite_info(call_info.func)  # type: ignore
+    assert func_info.name == "add"  # type: ignore
+    return call_info.args
 
-    expr = 1 + x
-    assert isinstance(expr.expression, Expression)
-    assert expr.expression.func.name == "add"
-    assert expr.expression.args == (1, x)
+
+def test_forward_reverse():
+    assert _helper_forward_reverse(x + 1) == (x, 1)
+    assert _helper_forward_reverse(1 + x) == (1, x)
 
 
 @pytest.mark.parametrize(
@@ -54,7 +57,7 @@ def test_forward_reverse():
         (x % y, "x % y"),
         (x**y, "x ** y"),
         (x**y % z, "x ** y % z"),
-        (pow(x, y, z), "pow(x, y, z)"),
+        (pow(x, y, z), "symbol.pow3(x, y, z)"),
         (x << y, "x << y"),
         (x >> y, "x >> y"),
         (x & y, "x & y"),
@@ -81,8 +84,8 @@ def test_forward_reverse():
         (G(x), "G(x)"),
     ],
 )
-def test_str(expr: Symbol, result: Symbol):
-    assert as_string(expr) == result
+def test_code(expr: Symbol, result: Symbol):
+    assert as_code(expr) == result
 
 
 @pytest.mark.parametrize(
@@ -150,7 +153,7 @@ class Real(Symbol):
     ],
 )
 def test_eval_str(expr: Symbol, result: Symbol):
-    assert eval(str(substitute(expr, {x: 1, y: 3}))) == result
+    assert eval(as_code(substitute(expr, {x: 1, y: 3}))) == result
 
 
 @pytest.mark.parametrize(

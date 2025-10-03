@@ -1,6 +1,6 @@
 """
 symbolite.abstract.real
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Objects and functions for real number operations.
 
@@ -10,10 +10,9 @@ Objects and functions for real number operations.
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Any
 
-from ..core import NamedExpression
+from ..core import Variable
 from ..core.function import (
     BinaryFunction,
     BinaryOperator,
@@ -23,12 +22,14 @@ from ..core.function import (
 )
 from .boolean import Boolean
 
-NumberT = int | float | complex
+NumberT = int | float
 
 
-@dataclasses.dataclass(frozen=True, repr=False)
-class Real(NamedExpression):
-    """A user defined symbol."""
+class Real(Variable[NumberT]):
+    """Real number symbolic variable.
+
+    See Symbol and Variable for more information.
+    """
 
     def eq(self, other: Any) -> Boolean:
         return eq(self, other)
@@ -60,10 +61,6 @@ class Real(NamedExpression):
     def __mul__(self, other: Any) -> Real:
         """Implements multiplication."""
         return mul(self, other)
-
-    def __matmul__(self, other: Any) -> Real:
-        """Implements multiplication."""
-        return matmul(self, other)
 
     def __truediv__(self, other: Any) -> Real:
         """Implements true division."""
@@ -117,10 +114,6 @@ class Real(NamedExpression):
         """Implements reflected multiplication."""
         return mul(other, self)
 
-    def __rmatmul__(self, other: Any) -> Real:
-        """Implements reflected multiplication."""
-        return matmul(other, self)
-
     def __rtruediv__(self, other: Any) -> Real:
         """Implements reflected true division."""
         return truediv(other, self)
@@ -170,65 +163,42 @@ class Real(NamedExpression):
         """Implements behavior for inversion using the ~ operator."""
         return invert(self)
 
-    def __str__(self) -> str:
-        from ..ops import as_string
 
-        if self.expression is None:
-            return super().__str__()
-        return as_string(self.expression)
-
-    def __set_name__(self, owner: Any, name: str):
-        if name.endswith("__return"):
-            return
-        current_name = getattr(self, "name", None)
-        import warnings
-
-        if current_name is not None and current_name != name:
-            warnings.warn(
-                f"Mismatched names in attribute {name}: {type(self)} is named {current_name}"
-            )
-
-        object.__setattr__(self, "name", name)
-
-
-CompOp = BinaryOperator[Real, Boolean]
+CompOp = BinaryOperator[Real | NumberT, Real | NumberT, Boolean]
 
 # Comparison methods (not operator)
-eq = CompOp("eq", "real", precedence=-5, fmt="{} == {}", result_cls=Boolean)
-ne = CompOp("ne", "real", precedence=-5, fmt="{} != {}", result_cls=Boolean)
+eq = CompOp("eq", "real", precedence=-5, fmt="{} == {}", output_type=Boolean)
+ne = CompOp("ne", "real", precedence=-5, fmt="{} != {}", output_type=Boolean)
 
 # Comparison
-lt = CompOp("lt", "real", precedence=-5, fmt="{} < {}", result_cls=Boolean)
-le = CompOp("le", "real", precedence=-5, fmt="{} <= {}", result_cls=Boolean)
-gt = CompOp("gt", "real", precedence=-5, fmt="{} > {}", result_cls=Boolean)
-ge = CompOp("ge", "real", precedence=-5, fmt="{} >= {}", result_cls=Boolean)
+lt = CompOp("lt", "real", precedence=-5, fmt="{} < {}", output_type=Boolean)
+le = CompOp("le", "real", precedence=-5, fmt="{} <= {}", output_type=Boolean)
+gt = CompOp("gt", "real", precedence=-5, fmt="{} > {}", output_type=Boolean)
+ge = CompOp("ge", "real", precedence=-5, fmt="{} >= {}", output_type=Boolean)
 
-BinOp = BinaryOperator[Real | NumberT, Real]
+BinOp = BinaryOperator[Real | NumberT, Real | NumberT, Real]
 
 # Emulating numeric types
-add = BinOp("add", "real", precedence=0, fmt="{} + {}", result_cls=Real)
-sub = BinOp("sub", "real", precedence=0, fmt="{} - {}", result_cls=Real)
-mul = BinOp("mul", "real", precedence=1, fmt="{} * {}", result_cls=Real)
-matmul = BinOp("matmul", "real", precedence=1, fmt="{} @ {}", result_cls=Real)
-truediv = BinOp("truediv", "real", precedence=1, fmt="{} / {}", result_cls=Real)
-floordiv = BinOp("floordiv", "real", precedence=1, fmt="{} // {}", result_cls=Real)
-mod = BinOp("mod", "real", precedence=1, fmt="{} % {}", result_cls=Real)
-pow_op = BinOp("pow", "real", precedence=3, fmt="{} ** {}", result_cls=Real)
-pow3_op = Function3[Real, Real](
-    "pow3", "real", fmt="pow({}, {}, {})", arity=3, result_cls=Real
-)
-lshift = BinOp("lshift", "real", precedence=-1, fmt="{} << {}", result_cls=Real)
-rshift = BinOp("rshift", "real", precedence=-1, fmt="{} >> {}", result_cls=Real)
-and_ = BinOp("and_", "real", precedence=-2, fmt="{} & {}", result_cls=Real)
-xor = BinOp("xor", "real", precedence=-3, fmt="{} ^ {}", result_cls=Real)
-or_ = BinOp("or_", "real", precedence=-4, fmt="{} | {}", result_cls=Real)
+add = BinOp("add", "real", precedence=0, fmt="{} + {}", output_type=Real)
+sub = BinOp("sub", "real", precedence=0, fmt="{} - {}", output_type=Real)
+mul = BinOp("mul", "real", precedence=1, fmt="{} * {}", output_type=Real)
+truediv = BinOp("truediv", "real", precedence=1, fmt="{} / {}", output_type=Real)
+floordiv = BinOp("floordiv", "real", precedence=1, fmt="{} // {}", output_type=Real)
+mod = BinOp("mod", "real", precedence=1, fmt="{} % {}", output_type=Real)
+pow_op = BinOp("pow", "real", precedence=3, fmt="{} ** {}", output_type=Real)
+pow3_op = Function3[Real, Real]("pow3", "real", output_type=Real)
+lshift = BinOp("lshift", "real", precedence=-1, fmt="{} << {}", output_type=Real)
+rshift = BinOp("rshift", "real", precedence=-1, fmt="{} >> {}", output_type=Real)
+and_ = BinOp("and_", "real", precedence=-2, fmt="{} & {}", output_type=Real)
+xor = BinOp("xor", "real", precedence=-3, fmt="{} ^ {}", output_type=Real)
+or_ = BinOp("or_", "real", precedence=-4, fmt="{} | {}", output_type=Real)
 
 UnOp = UnaryOperator[Real, Real]
 
 # Unary operators
-neg = UnOp("neg", "real", precedence=2, fmt="-{}", result_cls=Real)
-pos = UnOp("pos", "real", precedence=2, fmt="+{}", result_cls=Real)
-invert = UnOp("invert", "real", precedence=2, fmt="~{}", result_cls=Real)
+neg = UnOp("neg", "real", precedence=2, fmt="-{}", output_type=Real)
+pos = UnOp("pos", "real", precedence=2, fmt="+{}", output_type=Real)
+invert = UnOp("invert", "real", precedence=2, fmt="~{}", output_type=Real)
 
 UnFun = UnaryFunction[Real | NumberT, Real]
 BinFun = BinaryFunction[Real | NumberT, Real]
@@ -240,68 +210,66 @@ BinFun = BinaryFunction[Real | NumberT, Real]
 # "perm": None,  # 1 or 2
 # "log": None,  # 1 or 2 is used as log(x, e)
 
-abs = UnFun("abs", "real", result_cls=Real)
-acos = UnFun("acos", "real", result_cls=Real)
-acosh = UnFun("acosh", "real", result_cls=Real)
-asin = UnFun("asin", "real", result_cls=Real)
-asinh = UnFun("asinh", "real", result_cls=Real)
-atan = UnFun("atan", "real", result_cls=Real)
-atan2 = BinFun("atan2", "real", result_cls=Real)
-atanh = UnFun("atanh", "real", result_cls=Real)
-ceil = UnFun("ceil", "real", result_cls=Real)
-comb = UnFun("comb", "real", result_cls=Real)
-copysign = UnFun("copysign", "real", result_cls=Real)
-cos = UnFun("cos", "real", result_cls=Real)
-cosh = UnFun("cosh", "real", result_cls=Real)
-degrees = UnFun("degrees", "real", result_cls=Real)
-erf = UnFun("erf", "real", result_cls=Real)
-erfc = UnFun("erfc", "real", result_cls=Real)
-exp = UnFun("exp", "real", result_cls=Real)
-expm1 = UnFun("expm1", "real", result_cls=Real)
-fabs = UnFun("fabs", "real", result_cls=Real)
-factorial = UnFun("factorial", "real", result_cls=Real)
-floor = UnFun("floor", "real", result_cls=Real)
-fmod = UnFun("fmod", "real", result_cls=Real)
-frexp = UnFun("frexp", "real", result_cls=Real)
-gamma = UnFun("gamma", "real", result_cls=Real)
-hypot = UnFun("gamma", "real", result_cls=Real)
-isfinite = UnFun("isfinite", "real", result_cls=Real)
-isinf = UnFun("isinf", "real", result_cls=Real)
-isnan = UnFun("isnan", "real", result_cls=Real)
-isqrt = UnFun("isqrt", "real", result_cls=Real)
-ldexp = BinFun("ldexp", "real", result_cls=Real)
-lgamma = UnFun("lgamma", "real", result_cls=Real)
-log = UnFun("log", "real", result_cls=Real)
-log10 = UnFun("log10", "real", result_cls=Real)
-log1p = UnFun("log1p", "real", result_cls=Real)
-log2 = UnFun("log2", "real", result_cls=Real)
-modf = UnFun("modf", "real", result_cls=Real)
-nextafter = UnFun("nextafter", "real", result_cls=Real)
-pow = UnFun("pow", "real", result_cls=Real)
-radians = UnFun("radians", "real", result_cls=Real)
-remainder = BinFun("remainder", "real", result_cls=Real)
-sin = UnFun("sin", "real", result_cls=Real)
-sinh = UnFun("sinh", "real", result_cls=Real)
-sqrt = UnFun("sqrt", "real", result_cls=Real)
-tan = UnFun("tan", "real", result_cls=Real)
-tanh = UnFun("tanh", "real", result_cls=Real)
-tan = UnFun("tan", "real", result_cls=Real)
-trunc = UnFun("trunc", "real", result_cls=Real)
-ulp = UnFun("ulp", "real", result_cls=Real)
+abs = UnFun("abs", "real", output_type=Real)
+acos = UnFun("acos", "real", output_type=Real)
+acosh = UnFun("acosh", "real", output_type=Real)
+asin = UnFun("asin", "real", output_type=Real)
+asinh = UnFun("asinh", "real", output_type=Real)
+atan = UnFun("atan", "real", output_type=Real)
+atan2 = BinFun("atan2", "real", output_type=Real)
+atanh = UnFun("atanh", "real", output_type=Real)
+ceil = UnFun("ceil", "real", output_type=Real)
+comb = UnFun("comb", "real", output_type=Real)
+copysign = UnFun("copysign", "real", output_type=Real)
+cos = UnFun("cos", "real", output_type=Real)
+cosh = UnFun("cosh", "real", output_type=Real)
+degrees = UnFun("degrees", "real", output_type=Real)
+erf = UnFun("erf", "real", output_type=Real)
+erfc = UnFun("erfc", "real", output_type=Real)
+exp = UnFun("exp", "real", output_type=Real)
+expm1 = UnFun("expm1", "real", output_type=Real)
+fabs = UnFun("fabs", "real", output_type=Real)
+factorial = UnFun("factorial", "real", output_type=Real)
+floor = UnFun("floor", "real", output_type=Real)
+fmod = UnFun("fmod", "real", output_type=Real)
+frexp = UnFun("frexp", "real", output_type=Real)
+gamma = UnFun("gamma", "real", output_type=Real)
+hypot = UnFun("gamma", "real", output_type=Real)
+isfinite = UnFun("isfinite", "real", output_type=Real)
+isinf = UnFun("isinf", "real", output_type=Real)
+isnan = UnFun("isnan", "real", output_type=Real)
+isqrt = UnFun("isqrt", "real", output_type=Real)
+ldexp = BinFun("ldexp", "real", output_type=Real)
+lgamma = UnFun("lgamma", "real", output_type=Real)
+log = UnFun("log", "real", output_type=Real)
+log10 = UnFun("log10", "real", output_type=Real)
+log1p = UnFun("log1p", "real", output_type=Real)
+log2 = UnFun("log2", "real", output_type=Real)
+modf = UnFun("modf", "real", output_type=Real)
+nextafter = UnFun("nextafter", "real", output_type=Real)
+pow = UnFun("pow", "real", output_type=Real)
+radians = UnFun("radians", "real", output_type=Real)
+remainder = BinFun("remainder", "real", output_type=Real)
+sin = UnFun("sin", "real", output_type=Real)
+sinh = UnFun("sinh", "real", output_type=Real)
+sqrt = UnFun("sqrt", "real", output_type=Real)
+tan = UnFun("tan", "real", output_type=Real)
+tanh = UnFun("tanh", "real", output_type=Real)
+tan = UnFun("tan", "real", output_type=Real)
+trunc = UnFun("trunc", "real", output_type=Real)
+ulp = UnFun("ulp", "real", output_type=Real)
 
-e = Real("e", namespace="real")
-inf = Real("inf", namespace="real")
-pi = Real("pi", namespace="real")
-nan = Real("nan", namespace="real")
-tau = Real("tau", namespace="real")
+e = Real("real.e")
+inf = Real("real.inf")
+pi = Real("real.pi")
+nan = Real("real.nan")
+tau = Real("rea.tau")
 
 del (
-    dataclasses,
     BinaryFunction,
     BinaryOperator,
     UnaryFunction,
     UnaryOperator,
-    NamedExpression,
     CompOp,
     BinOp,
     UnOp,

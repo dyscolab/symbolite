@@ -16,14 +16,14 @@ from typing import Any
 
 @singledispatch
 def as_function(
-    expr: Any,
+    obj: Any,
     libsl: types.ModuleType | None = None,
 ) -> Callable[..., Any]:
     """Converts the expression to a callable function.
 
     Parameters
     ----------
-    expr
+    obj
         symbolic expression.
     libsl
         implementation module.
@@ -31,7 +31,7 @@ def as_function(
     from ..ops import as_function_def
     from .base import compile
 
-    function_def = as_function_def(expr)
+    function_def = as_function_def(obj)
     lm = compile(function_def, libsl)
 
     f = lm["f"]

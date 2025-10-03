@@ -11,38 +11,42 @@ Yields all named structures inside a symbolic structure.
 from functools import singledispatch
 from typing import Any
 
-from ..abstract import Real, Symbol, Vector
-from ..core import NamedExpression, SymbolicNamespace, SymbolicNamespaceMeta
-from .base import assign, build_function_code, free_symbols
+from ..core import SymbolicNamespace, SymbolicNamespaceMeta
+from ..core.variable import Name, Variable
+from .base import assign, build_function_code, free_variables
 
 
 @singledispatch
-def as_function_def(expr: Any) -> str:
-    raise TypeError(f"Cannot build function definition for {type(expr)}")
+def as_function_def(obj: Any) -> str:
+    raise TypeError(f"Cannot build function definition for {type(obj)}")
 
 
 @as_function_def.register(tuple)
 @as_function_def.register(list)
 def _(
-    expr: tuple[Any],
+    obj: tuple[Any],
 ) -> str:
+    from ..ops import as_code
+
     return build_function_code(
         "f",
-        map(str, free_symbols(expr)),
-        (assign(f"__return_{ndx}", str(el)) for ndx, el in enumerate(expr)),
-        map("__return_{}".format, range(len(expr))),
+        map(as_code, free_variables(obj)),
+        (assign(f"__return_{ndx}", as_code(el)) for ndx, el in enumerate(obj)),
+        map("__return_{}".format, range(len(obj))),
     )
 
 
 @as_function_def.register(dict)
 def _(
-    expr: dict[str, Any],
+    obj: dict[str, Any],
 ) -> str:
+    from ..ops import as_code
+
     return build_function_code(
         "f",
-        map(str, free_symbols(tuple(expr.values()))),
+        map(as_code, free_variables(tuple(obj.values()))),
         ["__return = {}"]
-        + [assign(f"__return['{k}']", str(el)) for k, el in expr.items()],
+        + [assign(f"__return['{k}']", as_code(el)) for k, el in obj.items()],
         [
             "__return",
         ],
@@ -52,22 +56,22 @@ def _(
 @as_function_def.register(SymbolicNamespaceMeta)
 @as_function_def.register(SymbolicNamespace)
 def _(
-    expr,
+    obj: SymbolicNamespace | SymbolicNamespaceMeta,
 ) -> str:
-    assert isinstance(expr, (SymbolicNamespace, SymbolicNamespaceMeta))
+    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
 
     lines: list[str] = []
-    for attr_name in dir(expr):
-        attr = getattr(expr, attr_name)
-        if not isinstance(attr, (Symbol, Real, Vector)):
+    for attr_name in dir(obj):
+        attr = getattr(obj, attr_name)
+        if not isinstance(attr, Variable):
             continue
 
-        if attr.expression is not None:
+        if not isinstance(attr.value, Name):
             lines.append(assign(attr_name, f"{attr!s}"))
 
     return build_function_code(
-        expr.__name__,
-        map(str, free_symbols(expr)),
+        obj.__name__,
+        map(str, free_variables(obj)),
         lines,
         [
             "__return",
@@ -75,14 +79,17 @@ def _(
     )
 
 
-@as_function_def.register
-def _(expr: NamedExpression) -> str:
-    function_name = expr.name or "f"
+@as_function_def.register(Variable)
+def _(obj: Variable[Any]) -> str:
+    from ..ops import as_code
+
+    # info = get_symbolite_info(obj)
+    function_name = "f"
     return build_function_code(
         function_name,
-        map(str, free_symbols(expr)),
+        map(as_code, free_variables(obj)),
         [
-            assign("__return", str(expr)),
+            assign("__return", as_code(obj)),
         ],
         [
             "__return",
