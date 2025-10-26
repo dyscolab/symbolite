@@ -2,7 +2,7 @@ import types
 
 import pytest
 
-from symbolite import UserFunction, evaluate
+from symbolite import UserFunction, translate
 from symbolite.core.call import Call
 from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.impl import get_all_implementations
@@ -41,5 +41,5 @@ def test_user_functions(func, args, result, libsl: types.ModuleType):
     value_info = get_symbolite_info(info.value)
     assert value_info.func is uf
     assert value_info.args == args
-    assert evaluate(value_info.func, libsl) is func
-    assert evaluate(output, libsl) == result
+    assert translate(value_info.func, libsl) is func
+    assert translate(output, libsl) == result

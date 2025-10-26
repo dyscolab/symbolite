@@ -8,7 +8,7 @@ from symbolite import Symbol, real
 from symbolite.core.variable import Variable
 from symbolite.impl import get_all_implementations
 from symbolite.ops import as_function, substitute
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import symbol_names, translate
 
 all_impl = get_all_implementations()
 
@@ -43,7 +43,7 @@ def test_typing():
 def test_known_symbols(expr: Variable, libsl: types.ModuleType):
     f = as_function(expr, libsl=libsl)
     assert f.__name__ == "f"
-    assert evaluate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == f(2, 3)
+    assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == f(2, 3)
     assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
 
 
@@ -81,7 +81,7 @@ def test_lib_symbols(expr: Variable[Any], replaced: Symbol, libsl: types.ModuleT
     f = as_function(expr, libsl=libsl)
     value = f(2, 3)
     assert f.__name__ == "f"
-    assert evaluate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == value
+    assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == value
     assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
 
 

@@ -20,6 +20,15 @@ from ..core.symbolite_object import get_symbolite_info
 from ..core.variable import Name, Variable
 from ._get_name import get_name, get_namespace
 
+try:
+    from ..impl.libpythoncode._codeexpr import CodeExpr
+except ImportError:  # pragma: no cover
+
+    class CodeExpr:  # type: ignore
+        """Fallback placeholder when libpythoncode is unavailable."""
+
+        text: str
+
 
 def build_function_code(
     name: str,
@@ -107,8 +116,20 @@ def count_named(obj: Any) -> dict[Any, int]:
     return {obj: 1}
 
 
-def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
-    """Evaluate expression.
+def _unwrap_translation(value: Any) -> Any:
+    if isinstance(value, CodeExpr):
+        return value.text
+    if isinstance(value, tuple):
+        return tuple(_unwrap_translation(v) for v in value)
+    if isinstance(value, list):
+        return [_unwrap_translation(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _unwrap_translation(v) for k, v in value.items()}
+    return value
+
+
+def translate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
+    """Translate expression into a backend representation.
 
     Parameters
     ----------
@@ -118,7 +139,7 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
         implementation module.
     """
     from ..impl import find_module_in_stack
-    from . import evaluate_impl
+    from . import translate_impl
 
     if libsl is None:
         libsl = find_module_in_stack()
@@ -126,7 +147,8 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
         warnings.warn("No libsl provided, defaulting to Python standard library.")
         from ..impl import libstd as libsl
 
-    return evaluate_impl(expr, libsl)
+    result = translate_impl(expr, libsl)
+    return _unwrap_translation(result)
 
 
 def is_free_variable(obj: Any) -> bool:

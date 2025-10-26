@@ -7,7 +7,7 @@ from symbolite import Symbol, real, vector
 from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
 from symbolite.ops import as_code, substitute
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import symbol_names, translate
 
 all_impl = get_all_implementations()
 
@@ -38,7 +38,7 @@ def test_vector():
 
 def test_methods():
     assert substitute(vec, {vec: (1, 2, 3)}) == (1, 2, 3)
-    assert evaluate(substitute(vec[1], {vec: (1, 2, 3)})) == 2
+    assert translate(substitute(vec[1], {vec: (1, 2, 3)})) == 2
     assert symbol_names(vec) == {
         "vec",
     }
@@ -64,12 +64,12 @@ def test_impl(libsl: types.ModuleType):
 
     try:
         expr = vector.sum(v)
-        assert evaluate(substitute(expr, {v: v1234}), libsl=libsl) == 10
+        assert translate(substitute(expr, {v: v1234}), libsl=libsl) == 10
     except Unsupported:
         pass
 
     expr = vector.prod(v)
-    assert evaluate(substitute(expr, {v: v1234}), libsl=libsl) == 24
+    assert translate(substitute(expr, {v: v1234}), libsl=libsl) == 24
 
 
 @requires_numpy
@@ -84,12 +84,12 @@ def test_impl_numpy():
     v = np.asarray((1, 2, 3))
 
     expr1 = vector.Vector("vec") + 1
-    assert np.allclose(evaluate(substitute(expr1, {vec: v})), v + 1)
+    assert np.allclose(translate(substitute(expr1, {vec: v})), v + 1)
 
     expr2 = real.cos(vector.sum(vector.Vector("vec")))
 
     assert np.allclose(
-        evaluate(substitute(expr2, {vec: v}), libsl=libsl), np.cos(np.sum(v))
+        translate(substitute(expr2, {vec: v}), libsl=libsl), np.cos(np.sum(v))
     )
 
 
@@ -104,8 +104,8 @@ def test_impl_sympy():
 
     vec = vector.Vector("vec")
     syarr = sy.IndexedBase("vec")
-    assert evaluate(vec, libsl=libsl) == syarr
-    assert evaluate(vec[1], libsl=libsl) == syarr[1]
+    assert translate(vec, libsl=libsl) == syarr
+    assert translate(vec[1], libsl=libsl) == syarr[1]
 
 
 @pytest.mark.parametrize(

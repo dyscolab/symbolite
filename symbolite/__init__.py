@@ -11,7 +11,7 @@ A minimal symbolic python package.
 from .abstract import Real, Symbol, Vector, real, vector
 from .core.function import UserFunction
 from .ops import substitute
-from .ops.base import evaluate
+from .ops.base import translate
 
 __all__ = [
     "Symbol",
@@ -20,6 +20,6 @@ __all__ = [
     "Vector",
     "vector",
     "UserFunction",
-    "evaluate",
+    "translate",
     "substitute",
 ]

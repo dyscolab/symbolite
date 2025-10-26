@@ -14,7 +14,7 @@ from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import ModuleType
 from typing import Any
 
-from .base import count_named, evaluate
+from .base import count_named, translate
 
 
 def solve_dependencies[TH: Hashable](
@@ -93,7 +93,7 @@ def eval_content[TH: Hashable](
     libsl: ModuleType,
     is_dependency: Callable[[Any], bool],
 ) -> dict[TH, Any]:
-    """Evaluate a group of
+    """Translate a group of assignments using the given backend.
 
     Parameters
     ----------
@@ -116,6 +116,6 @@ def eval_content[TH: Hashable](
     out: dict[TH, Any] = {}
     for layer in layers:
         for item in layer:
-            out[item] = evaluate(substitute(content[item], out), libsl)
+            out[item] = translate(substitute(content[item], out), libsl)
 
     return out

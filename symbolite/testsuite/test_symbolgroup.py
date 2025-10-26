@@ -6,7 +6,7 @@ from symbolite import Real, Symbol, real
 from symbolite.core.symbolgroup import SymbolicNamespace
 from symbolite.impl import libstd
 from symbolite.ops import as_code, get_name, substitute
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import symbol_names, translate
 
 
 def test_double_naming():
@@ -43,7 +43,7 @@ def test_substitute_eval():
     assert Y.x == 1
     assert Y.y == 2
 
-    d = evaluate(Y, libstd)
+    d = translate(Y, libstd)
     assert d["x"] == 1
     assert d["y"] == 2
     assert d["z"] == d["x"] + 2 * d["y"]

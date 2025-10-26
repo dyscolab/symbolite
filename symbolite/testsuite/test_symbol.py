@@ -9,7 +9,7 @@ from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.impl import find_module_in_stack
 from symbolite.ops import substitute
 from symbolite.ops._as_code import as_code
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import symbol_names, translate
 
 x, y, z = map(Symbol, "x y z".split())
 
@@ -163,8 +163,8 @@ def test_eval_str(expr: Symbol, result: Symbol):
         # (x + 2 * F(y), x + 2 * F(z)),
     ],
 )
-def test_eval(expr: Symbol, result: Symbol):
-    assert evaluate(substitute(expr, {x: 1, y: 3})) == result
+def test_translate(expr: Symbol, result: Symbol):
+    assert translate(substitute(expr, {x: 1, y: 3})) == result
 
 
 def test_find_libs_in_stack():
