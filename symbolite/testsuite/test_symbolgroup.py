@@ -5,8 +5,8 @@ import pytest
 from symbolite import Real, Symbol, real
 from symbolite.core.symbolgroup import SymbolicNamespace
 from symbolite.impl import libstd
-from symbolite.ops import as_code, get_name, substitute
-from symbolite.ops.base import symbol_names, translate
+from symbolite.ops import as_code, get_name, substitute, translate
+from symbolite.ops.base import symbol_names
 
 
 def test_double_naming():

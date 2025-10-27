@@ -14,7 +14,8 @@ from collections.abc import Callable, Hashable, Iterator, Mapping
 from types import ModuleType
 from typing import Any
 
-from .base import count_named, translate
+from ._translate import translate
+from .base import count_named
 
 
 def solve_dependencies[TH: Hashable](

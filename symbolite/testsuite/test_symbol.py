@@ -4,21 +4,24 @@ import pytest
 
 from symbolite import Symbol
 from symbolite.core.call import Call
-from symbolite.core.function import UnaryFunction
+from symbolite.core.function import UserFunction
 from symbolite.core.symbolite_object import get_symbolite_info
-from symbolite.impl import find_module_in_stack
+from symbolite.impl import find_module_in_stack, libpythoncode
+from symbolite.impl.libpythoncode._codeexpr import make_function
 from symbolite.ops import substitute
 from symbolite.ops._as_code import as_code
-from symbolite.ops.base import symbol_names, translate
+from symbolite.ops.base import evaluate, symbol_names
 
 x, y, z = map(Symbol, "x y z".split())
 
-F: UnaryFunction[Any, Symbol] = UnaryFunction("F", output_type=Symbol)
-G: UnaryFunction[Any, Symbol] = UnaryFunction("G", output_type=Symbol)
+F = UserFunction("F", output_type=Symbol)  # type: ignore
+G = UserFunction("G", output_type=Symbol)  # type: ignore
+
+F.register_impl(make_function("F"), libsl=libpythoncode)  # type: ignore
+G.register_impl(make_function("G"), libsl=libpythoncode)  # type: ignore
 
 
 @pytest.mark.mypy_testing
-# noqa: F821
 def test_typing():
     reveal_type(x + y)  # R: symbolite.abstract.symbol.Symbol # noqa: F821
     reveal_type(2 + y)  # R: symbolite.abstract.symbol.Symbol # noqa: F821
@@ -163,8 +166,8 @@ def test_eval_str(expr: Symbol, result: Symbol):
         # (x + 2 * F(y), x + 2 * F(z)),
     ],
 )
-def test_translate(expr: Symbol, result: Symbol):
-    assert translate(substitute(expr, {x: 1, y: 3})) == result
+def test_evaluate(expr: Symbol, result: Symbol):
+    assert evaluate(substitute(expr, {x: 1, y: 3})) == result
 
 
 def test_find_libs_in_stack():

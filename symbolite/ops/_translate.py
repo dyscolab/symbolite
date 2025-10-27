@@ -1,5 +1,5 @@
 """
-symbolite.ops._translate_impl
+symbolite.ops._translate
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Yields all named structures inside a symbolic structure.
@@ -19,14 +19,14 @@ from ..core import (
     Unsupported,
 )
 from ..core.call import CallInfo
-from ..core.function import FunctionInfo, OperatorInfo, UserFunction
+from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.variable import Name, Variable
 from ._get_name import get_name
 
 
 @singledispatch
-def translate_impl(obj: Any, libsl: types.ModuleType) -> Any:
+def translate(obj: Any, libsl: types.ModuleType) -> Any:
     """Translate expression into backend representation.
 
     Parameters
@@ -39,30 +39,30 @@ def translate_impl(obj: Any, libsl: types.ModuleType) -> Any:
     return obj
 
 
-@translate_impl.register
-def translate_impl_str(obj: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
+@translate.register
+def translate_str(obj: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
     return attrgetter(obj)(libsl)
 
 
-@translate_impl.register(SymboliteObject)
-def translate_impl_symbolite_object(
+@translate.register(SymboliteObject)
+def translate_symbolite_object(
     obj: SymboliteObject[Any], libsl: types.ModuleType
 ) -> Any:
     info = get_symbolite_info(obj)
-    return translate_impl(info, libsl)
+    return translate(info, libsl)
 
 
-@translate_impl.register(Variable)
+@translate.register(Variable)
 def translate_variable(obj: Variable[Any], libsl: types.ModuleType) -> Any:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
-        return translate_impl(info.value, libsl)
+        return translate(info.value, libsl)
 
     symbol_name, namespace = info.value.name, info.value.namespace
 
     if namespace:
         name = get_name(obj, qualified=True)
-        value = translate_impl(name, libsl)
+        value = translate(name, libsl)
 
         if value is Unsupported:
             raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
@@ -71,7 +71,7 @@ def translate_variable(obj: Variable[Any], libsl: types.ModuleType) -> Any:
 
     # User defined symbol, try to map the class
     name = f"{obj.__class__.__module__.split('.')[-1]}.{obj.__class__.__name__}"
-    f = translate_impl(name, libsl)
+    f = translate(name, libsl)
 
     if f is Unsupported:
         raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
@@ -79,34 +79,38 @@ def translate_variable(obj: Variable[Any], libsl: types.ModuleType) -> Any:
     return f(symbol_name)
 
 
-@translate_impl.register(FunctionInfo)
-def _(obj: FunctionInfo[Any], libsl: types.ModuleType) -> Any | Unsupported:
+@translate.register(FunctionInfo)
+def translate_function_info(
+    obj: FunctionInfo[Any], libsl: types.ModuleType
+) -> Any | Unsupported:
     attr_name = f"{obj.namespace}.{obj.name}"
     return attrgetter(attr_name)(libsl)
 
 
-@translate_impl.register(OperatorInfo)
-def _(obj: OperatorInfo[Any], libsl: types.ModuleType) -> Any | Unsupported:
+@translate.register(OperatorInfo)
+def translate_operator_info(
+    obj: OperatorInfo[Any], libsl: types.ModuleType
+) -> Any | Unsupported:
     attr_name = f"{obj.namespace}.{obj.name}"
     return attrgetter(attr_name)(libsl)
 
 
-@translate_impl.register(SymbolicNamespaceMeta)
-@translate_impl.register(SymbolicNamespace)
+@translate.register(SymbolicNamespaceMeta)
+@translate.register(SymbolicNamespace)
 def _(obj: SymbolicNamespace | SymbolicNamespaceMeta, libsl: types.ModuleType) -> Any:
     assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
     return {
-        attr_name: translate_impl(getattr(obj, attr_name), libsl)
+        attr_name: translate(getattr(obj, attr_name), libsl)
         for attr_name in dir(obj)
         if not attr_name.startswith("__")
     }
 
 
-@translate_impl.register(CallInfo)
-def _(obj: CallInfo, libsl: types.ModuleType) -> Any:
-    func = translate_impl(obj.func, libsl)
-    args = tuple(translate_impl(arg, libsl) for arg in obj.args)
-    kwargs = {k: translate_impl(arg, libsl) for k, arg in obj.kwargs_items}
+@translate.register(CallInfo)
+def translate_call_info(obj: CallInfo, libsl: types.ModuleType) -> Any:
+    func = translate(obj.func, libsl)
+    args = tuple(translate(arg, libsl) for arg in obj.args)
+    kwargs = {k: translate(arg, libsl) for k, arg in obj.kwargs_items}
 
     try:
         return func(*args, **kwargs)
@@ -118,14 +122,20 @@ def _(obj: CallInfo, libsl: types.ModuleType) -> Any:
         raise ex
 
 
-@translate_impl.register(UserFunction)
-def _(obj: UserFunction[Any, Any, Any], libsl: types.ModuleType) -> Any:
-    impls = obj._impls
-    if libsl in impls:
-        return impls[libsl]
-    elif "default" in impls:
-        return impls["default"]
-    else:
-        raise Exception(
-            f"No implementation found for {libsl.__name__} and no default implementation provided for function {obj!s}"
-        )
+@translate.register(UserFunctionInfo)
+def translate_user_function_info(
+    obj: UserFunctionInfo[Any, Any, Any], libsl: types.ModuleType
+) -> Any:
+    impls = obj.impls
+    default = None
+    for k, v in impls:
+        if k is libsl:
+            return v
+        elif k == "default":
+            default = v
+    if default is not None:
+        return default
+
+    raise Exception(
+        f"No implementation found for {libsl.__name__} and no default implementation provided for function {obj!s}"
+    )

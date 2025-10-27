@@ -177,9 +177,17 @@ class BinaryOperator[I1, I2, O: Variable[Any]](Operator[O]):
         return super().__call__(arg1, arg2)
 
 
-class UserFunction[P, T, O: Variable[Any]](Function[O]):
-    _impls: dict[types.ModuleType | Literal["default"], Callable[[P], T]]
+class UserFunctionInfo[P, T, O: Variable[Any]](NamedTuple):
+    name: str
+    namespace: str
+    # Use None to indicate that the arity is unknown or it has keyword arguments
+    arity: int | None
+    # Result symbolic class
+    output_type: type[O]
+    impls: tuple[tuple[types.ModuleType | Literal["default"], Callable[[P], T]], ...]
 
+
+class UserFunction[P, T, O: Variable[Any]](SymboliteObject[UserFunctionInfo[P, T, O]]):
     def __init__(
         self,
         name: str,
@@ -188,18 +196,40 @@ class UserFunction[P, T, O: Variable[Any]](Function[O]):
         arity: int | None = None,
         output_type: type[O],
     ) -> None:
-        set_symbolite_info(self, FunctionInfo(name, namespace, arity, output_type))
-        self._impls = {}
+        set_symbolite_info(
+            self, UserFunctionInfo(name, namespace, arity, output_type, ())
+        )
 
     @classmethod
     def from_function(cls, func: Callable[[P], T]) -> Self:
         obj = cls(
             name=func.__name__,
-            namespace="user",
+            namespace="",
             output_type=cast(type[O], Variable),
         )
-        obj._impls["default"] = func
+        obj.register_impl(func, libsl="default")
         return obj
 
-    def register_impl(self, func: Callable[[P], T], libsl: types.ModuleType):
-        self._impls[libsl] = func
+    def register_impl(
+        self, func: Callable[[P], T], libsl: types.ModuleType | Literal["default"]
+    ) -> None:
+        info = get_symbolite_info(self)
+        info = info._replace(impls=info.impls + ((libsl, func),))
+        set_symbolite_info(self, info)
+
+    def __call__(self, *args: Any, **kwds: Any) -> O:
+        info = get_symbolite_info(self)
+        if info.arity is None:
+            return info.output_type(Call(self, args, kwds))
+        if kwds:
+            raise ValueError(
+                "If arity is given, keyword arguments should not be provided."
+            )
+        if len(args) != info.arity:
+            raise ValueError(
+                f"Invalid number of arguments ({len(args)}), expected {info.arity}."
+            )
+
+        expr = Call(self, args, tuple())
+
+        return info.output_type(expr)

@@ -21,14 +21,14 @@ from ._as_function import as_function
 from ._as_function_def import as_function_def
 from ._get_name import get_name
 from ._substitute import substitute
-from ._translate_impl import translate_impl
+from ._translate import translate
 from ._tree_view import tree_view
 from ._yield_named import yield_named
 
 __all__ = [
     "as_function",
     "as_function_def",
-    "translate_impl",
+    "translate",
     "get_name",
     "substitute",
     "yield_named",

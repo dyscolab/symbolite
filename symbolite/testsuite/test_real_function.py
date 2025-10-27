@@ -7,8 +7,8 @@ import pytest
 from symbolite import Symbol, real
 from symbolite.core.variable import Variable
 from symbolite.impl import get_all_implementations
-from symbolite.ops import as_function, substitute
-from symbolite.ops.base import symbol_names, translate
+from symbolite.ops import as_function, substitute, translate
+from symbolite.ops.base import symbol_names
 
 all_impl = get_all_implementations()
 

@@ -19,7 +19,7 @@ from ..core import (
     SymbolicNamespaceMeta,
     Variable,
 )
-from ..core.function import Operator
+from ..core.function import Operator, UserFunction
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.variable import Name
 
@@ -57,9 +57,9 @@ def yield_named_variable(
         yield from yield_named(info.value)
 
 
-@yield_named.register(Function | Operator)
+@yield_named.register(Function | Operator | UserFunction)
 def yield_named_base_function(
-    obj: Function[Any] | Operator[Any],
+    obj: Function[Any] | Operator[Any] | UserFunction[Any, Any, Any],
 ) -> Generator[SymboliteObject[Any], None, None]:
     yield obj
 

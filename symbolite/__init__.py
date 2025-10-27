@@ -10,8 +10,7 @@ A minimal symbolic python package.
 
 from .abstract import Real, Symbol, Vector, real, vector
 from .core.function import UserFunction
-from .ops import substitute
-from .ops.base import translate
+from .ops import substitute, translate
 
 __all__ = [
     "Symbol",

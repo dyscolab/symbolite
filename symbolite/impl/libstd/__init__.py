@@ -9,6 +9,9 @@ into values and functions defined in Python standard library.
 :license: BSD, see LICENSE for more details.
 """
 
+from .. import Kind
 from . import real, symbol, vector
+
+KIND = Kind.VALUE
 
 __all__ = ["symbol", "real", "vector"]

@@ -20,15 +20,6 @@ from ..core.symbolite_object import get_symbolite_info
 from ..core.variable import Name, Variable
 from ._get_name import get_name, get_namespace
 
-try:
-    from ..impl.libpythoncode._codeexpr import CodeExpr
-except ImportError:  # pragma: no cover
-
-    class CodeExpr:  # type: ignore
-        """Fallback placeholder when libpythoncode is unavailable."""
-
-        text: str
-
 
 def build_function_code(
     name: str,
@@ -117,6 +108,8 @@ def count_named(obj: Any) -> dict[Any, int]:
 
 
 def _unwrap_translation(value: Any) -> Any:
+    from ..impl.libpythoncode._codeexpr import CodeExpr
+
     if isinstance(value, CodeExpr):
         return value.text
     if isinstance(value, tuple):
@@ -128,7 +121,7 @@ def _unwrap_translation(value: Any) -> Any:
     return value
 
 
-def translate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
+def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     """Translate expression into a backend representation.
 
     Parameters
@@ -138,16 +131,21 @@ def translate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     libsl
         implementation module.
     """
-    from ..impl import find_module_in_stack
-    from . import translate_impl
+    from ..impl import Kind, find_module_in_stack
+    from ._translate import translate
 
     if libsl is None:
         libsl = find_module_in_stack()
     if libsl is None:
         warnings.warn("No libsl provided, defaulting to Python standard library.")
         from ..impl import libstd as libsl
+    else:
+        if libsl.KIND != Kind.VALUE:
+            raise ValueError(
+                f"Implementation module {libsl} of kind {libsl.KIND} cannot be used for evaluation."
+            )
 
-    result = translate_impl(expr, libsl)
+    result = translate(expr, libsl)
     return _unwrap_translation(result)
 
 

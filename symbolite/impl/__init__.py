@@ -1,7 +1,13 @@
 import importlib
 import inspect
 import types
+from enum import Enum, auto
 from pathlib import Path
+
+
+class Kind(Enum):
+    VALUE = auto()
+    CODE = auto()
 
 
 def find_module_in_stack(name: str = "libsl") -> types.ModuleType | None:
@@ -27,8 +33,13 @@ def find_module_in_stack(name: str = "libsl") -> types.ModuleType | None:
     return None
 
 
-def get_all_implementations() -> dict[str, types.ModuleType]:
-    out = {}
+def get_all_implementations(
+    kind: Kind | tuple[Kind, ...] = Kind.VALUE,
+) -> dict[str, types.ModuleType]:
+    if not isinstance(kind, tuple):
+        kind = (kind,)
+
+    out: dict[str, types.ModuleType] = {}
 
     path = Path(__file__)
     for p in path.parent.iterdir():
@@ -41,6 +52,7 @@ def get_all_implementations() -> dict[str, types.ModuleType]:
         except ImportError:
             pass
         else:
-            out[name] = module
+            if module.KIND in kind:
+                out[name] = module
 
     return out
