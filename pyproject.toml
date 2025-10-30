@@ -32,6 +32,14 @@ changelog = "https://github.com/dyscolab/symbolite/blob/main/CHANGES"
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
+[tool.setuptools.package-data]
+symbolite = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pixi.pypi-dependencies]
+symbolite = { path = ".", editable = true }
 
 [tool.hatch.version]
 source = "vcs"
@@ -42,7 +50,7 @@ cache-keys = [{ file = "pyproject.toml" }, { git = true }]
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --doctest-modules"
 pythonpath = "."
-testpaths = ["symbolite/testsuite"]
+testpaths = ["src/symbolite/testsuite"]
 doctest_optionflags = "NUMBER"
 filterwarnings = "ignore:No libsl provided, defaulting to Python standard library."
 
@@ -57,7 +65,7 @@ channels = ["https://prefix.dev/conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.environments]
-default = { features = ["test", "backends", "dev"]}
+default = { features = ["test", "backends", "dev"] }
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 test-py312 = ["test", "py312"]

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import math
 import operator as op
-import typing as ty
+from typing import Any
 
 from symbolite.core import Unsupported
 
@@ -51,8 +51,8 @@ xor = op.xor
 or_ = op.or_
 
 
-def _rev(func: ty.Any) -> ty.Any:
-    def _internal(a: ty.Any, b: ty.Any) -> ty.Any:
+def _rev(func: Any) -> Any:
+    def _internal(a: Any, b: Any) -> Any:
         return func(b, a)
 
     return _internal

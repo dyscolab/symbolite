@@ -10,11 +10,14 @@ into values and functions defined in SymPy.
 """
 
 from __future__ import annotations
+
 import operator as op
+from typing import Any
 
 import sympy as sy
 from sympy.abc import x, y
 
+from symbolite.core import Unsupported
 
 # Comparison methods (not operator)
 eq = op.eq
@@ -42,8 +45,8 @@ xor = op.xor
 or_ = op.or_
 
 
-def _rev(func: ty.Any) -> ty.Any:
-    def _internal(a: ty.Any, b: ty.Any) -> ty.Any:
+def _rev(func: Any) -> Any:
+    def _internal(a: Any, b: Any) -> Any:
         return func(b, a)
 
     return _internal
@@ -68,9 +71,6 @@ ror = _rev(op.or_)
 neg = op.neg
 pos = op.pos
 invert = op.inv
-
-
-from symbolite.core import Unsupported
 
 abs = sy.Abs
 acos = sy.acos

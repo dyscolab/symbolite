@@ -10,7 +10,9 @@ into values and functions defined in JAX.
 """
 
 from __future__ import annotations
+
 import operator as op
+from typing import Any
 
 import jax.numpy as np
 
@@ -42,8 +44,8 @@ xor = op.xor
 or_ = op.or_
 
 
-def _rev(func: ty.Any) -> ty.Any:
-    def _internal(a: ty.Any, b: ty.Any) -> ty.Any:
+def _rev(func: Any) -> Any:
+    def _internal(a: Any, b: Any) -> Any:
         return func(b, a)
 
     return _internal

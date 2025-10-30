@@ -11,6 +11,7 @@ from symbolite.ops.util import eval_content, substitute_content
 class SimpleVariable(real.Real):
     """Special type of Real that is evaluated to itself."""
 
+
 class SimpleParameter(real.Real):
     """Special type of Real that is evaluated to itself."""
 
