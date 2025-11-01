@@ -10,8 +10,8 @@ into values and functions defined in NumPy.
 """
 
 from .. import Kind
-from . import real, symbol, vector
+from . import lang, real, symbol, vector
 
 KIND = Kind.VALUE
 
-__all__ = ["symbol", "real", "vector"]
+__all__ = ["symbol", "real", "vector", "lang"]

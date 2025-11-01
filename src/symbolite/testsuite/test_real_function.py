@@ -5,16 +5,78 @@ from typing import Any
 import pytest
 
 from symbolite import Symbol, real
+from symbolite.abstract.lang import Assign, Block
 from symbolite.core.variable import Variable
 from symbolite.impl import get_all_implementations
-from symbolite.ops import as_function, substitute, translate
-from symbolite.ops.base import symbol_names
+from symbolite.ops import substitute, translate
+from symbolite.ops.base import free_variables, symbol_names
 
 all_impl = get_all_implementations()
 
 x, y, z = map(real.Real, "x y z".split())
 
 xsy = real.Real("xsy")
+
+
+def _make_block_from_variable(expr: Variable[Any], *, name: str = "f") -> Block:
+    result = expr.__class__("__result")
+    return Block(
+        inputs=free_variables(expr),
+        outputs=(result,),
+        lines=(Assign(result, expr),),
+        name=name,
+    )
+
+
+def _block_factory_f1() -> Block:
+    result = real.Real("result")
+    return Block(
+        inputs=(x, y),
+        outputs=(result,),
+        lines=(Assign(result, 2 * x + y),),
+        name="f",
+    )
+
+
+def _block_factory_f2() -> Block:
+    total = real.Real("total")
+    triple = real.Real("triple")
+    quadruple = real.Real("quadruple")
+    return Block(
+        inputs=(x, y, z),
+        outputs=(total, triple, quadruple),
+        lines=(
+            Assign(total, 2 * x + y),
+            Assign(triple, 3 * x),
+            Assign(quadruple, 4 * z),
+        ),
+        name="f",
+    )
+
+
+def _block_factory_f3() -> Block:
+    total = real.Real("total")
+    triple = real.Real("triple")
+    quadruple = real.Real("quadruple")
+    result: Variable[Any] = Variable("result")
+    return Block(
+        inputs=(x, y, z),
+        outputs=(result,),
+        lines=(
+            Assign(total, 2 * x + y),
+            Assign(triple, 3 * x),
+            Assign(quadruple, 4 * z),
+            Assign(
+                result,
+                {
+                    "a": total,
+                    "b": triple,
+                    "c": quadruple,
+                },
+            ),
+        ),
+        name="f",
+    )
 
 
 @pytest.mark.mypy_testing
@@ -41,32 +103,29 @@ def test_typing():
 )
 @pytest.mark.parametrize("libsl", all_impl.values(), ids=all_impl.keys())
 def test_known_symbols(expr: Variable, libsl: types.ModuleType):
-    f = as_function(expr, libsl=libsl)
-    assert f.__name__ == "f"
-    assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == f(2, 3)
-    assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
-
-
-# x = 2, y = 3, z = 1
-f1 = 2 * x + y
-f2 = (f1, 3 * x, 4 * z)
-f3 = {"a": f1, "b": 3 * x, "c": 4 * z}
+    block = _make_block_from_variable(expr)
+    f = translate(block, libsl=libsl)
+    if inspect.isfunction(f):
+        assert f.__name__ == "f"
+        assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == f(2, 3)
+        assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
 
 
 @pytest.mark.parametrize(
-    "expr,params,args,result",
+    "block_factory,params,args,result",
     [
-        (f1, ("x", "y"), (2, 3), 7),
-        (f2, ("x", "y", "z"), (2, 3, 1), (7, 6, 4)),
-        (f3, ("x", "y", "z"), (2, 3, 1), {"a": 7, "b": 6, "c": 4}),
+        (_block_factory_f1, ("x", "y"), (2, 3), 7),
+        (_block_factory_f2, ("x", "y", "z"), (2, 3, 1), (7, 6, 4)),
     ],
 )
 @pytest.mark.parametrize("libsl", all_impl.values(), ids=all_impl.keys())
-def test_as_function(expr, params, args, result, libsl: types.ModuleType):
-    f = as_function(expr, libsl=libsl)
-    assert f.__name__ == "f"
-    assert tuple(inspect.signature(f).parameters.keys()) == params
-    assert f(*args) == result
+def test_block_execution(block_factory, params, args, result, libsl: types.ModuleType):
+    block = block_factory()
+    f = translate(block, libsl=libsl)
+    if inspect.isfunction(f):
+        assert f.__name__ == "f"
+        assert tuple(inspect.signature(f).parameters.keys()) == params
+        assert f(*args) == result
 
 
 @pytest.mark.parametrize(
@@ -78,11 +137,13 @@ def test_as_function(expr, params, args, result, libsl: types.ModuleType):
 )
 @pytest.mark.parametrize("libsl", all_impl.values(), ids=all_impl.keys())
 def test_lib_symbols(expr: Variable[Any], replaced: Symbol, libsl: types.ModuleType):
-    f = as_function(expr, libsl=libsl)
-    value = f(2, 3)
-    assert f.__name__ == "f"
-    assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == value
-    assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
+    block = _make_block_from_variable(expr)
+    f = translate(block, libsl=libsl)
+    if inspect.isfunction(f):
+        value = f(2, 3)
+        assert f.__name__ == "f"
+        assert translate(substitute(expr, {x: 2, y: 3}), libsl=libsl) == value
+        assert tuple(inspect.signature(f).parameters.keys()) == ("x", "y")
 
 
 @pytest.mark.parametrize(

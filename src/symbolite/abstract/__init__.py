@@ -9,8 +9,9 @@ Abstract symbolite primitives.
 """
 
 from .boolean import Boolean
+from .lang import Assign, Block
 from .real import Real
 from .symbol import Symbol
 from .vector import Vector
 
-__all__ = ["Symbol", "Real", "Vector", "Boolean"]
+__all__ = ["Symbol", "Real", "Vector", "Boolean", "Block", "Assign"]

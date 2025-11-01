@@ -40,7 +40,44 @@ def translate(obj: Any, libsl: types.ModuleType) -> Any:
 
 
 @translate.register
+def translate_bool(obj: bool, libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_bool(obj, libsl)
+
+
+@translate.register
+def translate_builtin_int(obj: int, libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_int(obj, libsl)
+
+
+@translate.register
+def translate_builtin_float(obj: float, libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_float(obj, libsl)
+
+
+@translate.register(tuple)
+def translate_tuple(obj: tuple[Any, ...], libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_tuple(tuple(translate(value, libsl) for value in obj), libsl)
+
+
+@translate.register(list)
+def translate_list(obj: list[Any], libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_list(tuple(translate(value, libsl) for value in obj), libsl)
+
+
+@translate.register(dict)
+def translate_dict(obj: dict[Any, Any], libsl: types.ModuleType) -> Any:
+    return libsl.lang.to_dict(
+        tuple(
+            (translate(key, libsl), translate(value, libsl))
+            for key, value in obj.items()
+        ),
+        libsl,
+    )
+
+
+@translate.register
 def translate_str(obj: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
+    # TODO: Remove?
     return attrgetter(obj)(libsl)
 
 

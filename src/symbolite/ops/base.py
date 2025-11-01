@@ -26,6 +26,8 @@ def build_function_code(
     parameters: Iterable[str],
     body: Iterable[str],
     return_variables: Iterable[str],
+    *,
+    return_annotation: str | None = None,
 ) -> str:
     """Build function code.
 
@@ -39,55 +41,23 @@ def build_function_code(
         Lines in the body of the function.
     return_variables
         Name of the return variables.
+    return_annotation
+        Optional return type annotation.
     """
 
-    fdef = (
-        f"def {name}({', '.join(parameters)}):\n    "
-        + "\n    ".join(body)
-        + f"\n    return {', '.join(return_variables)}"
-    )
-    return fdef
+    header = f"def {name}({', '.join(parameters)})"
+    if return_annotation:
+        header += f" -> {return_annotation}"
 
+    body_lines = list(body)
+    parts = [f"{header}:"]
 
-def assign(lhs, rhs):
-    return f"{lhs} = {rhs}"
+    if body_lines:
+        parts.append("    " + "\n    ".join(body_lines))
 
+    parts.append(f"    return {', '.join(return_variables)}")
 
-def compile(
-    code: str,
-    libsl: types.ModuleType | None = None,
-) -> dict[str, Any]:
-    """Compile the code and return the local dictionary.
-
-    Parameters
-    ----------
-    expr
-        symbolic expression.
-    libsl
-        implementation module.
-    """
-    from ..impl import find_module_in_stack
-
-    if libsl is None:
-        libsl = find_module_in_stack()
-    if libsl is None:
-        warnings.warn("No libsl provided, defaulting to Python standard library.")
-        from ..impl import libstd as libsl
-
-    assert libsl is not None
-
-    lm: dict[str, Any] = {}
-    exec(
-        code,
-        {
-            "symbol": libsl.symbol,
-            "real": libsl.real,
-            "vector": libsl.vector,
-            **globals(),
-        },
-        lm,
-    )
-    return lm
+    return "\n".join(parts)
 
 
 def count_named(obj: Any) -> dict[Any, int]:

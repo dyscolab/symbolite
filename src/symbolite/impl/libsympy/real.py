@@ -14,6 +14,7 @@ from __future__ import annotations
 import operator as op
 from typing import Any
 
+import sympy
 import sympy as sy
 from sympy.abc import x, y
 
@@ -126,6 +127,9 @@ pi = sy.pi
 nan = sy.nan
 tau = 2 * sy.pi
 
-Real = sy.RealNumber
+
+def Real(name: str):
+    return sympy.Symbol(name, real=True)
+
 
 del sy, Unsupported, x, y

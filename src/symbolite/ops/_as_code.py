@@ -15,15 +15,16 @@ from symbolite.core import SymbolicNamespace, SymbolicNamespaceMeta
 from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.core.variable import Name, Variable
 
-from ..impl import libpythoncode
 from ._get_name import get_name
-from ._translate import translate
-from .base import assign, free_variables
+from .base import free_variables
 
 
 @singledispatch
 def as_code(obj: Any) -> str:
     """Convert a symbolite object to python code."""
+    from ..impl import libpythoncode
+    from ._translate import translate
+
     s = translate(obj, libpythoncode)
     if hasattr(s, "text"):
         return s.text
@@ -35,7 +36,12 @@ def as_code(obj: Any) -> str:
 
 @as_code.register
 def _(obj: SymbolicNamespaceMeta | SymbolicNamespace) -> str:
+    from ..impl import libpythoncode
+    from ._translate import translate
+
     lines = [f"# {obj.__name__}", ""]
+
+    assign = lambda a, b: f"{a} = {b}"  # noqa: E731
 
     for free_var in free_variables(obj):
         info = get_symbolite_info(free_var)
