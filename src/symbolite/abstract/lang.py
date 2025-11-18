@@ -7,16 +7,18 @@ Language-level symbolic primitives such as assignments and blocks.
 
 from __future__ import annotations
 
-from typing import Any, NamedTuple
+from typing import Any
 
 from symbolite.ops._get_name import get_name
 
-from ..core.lang import ValueConverter
+from ..core.lang import AssignInfo, BlockInfo, ValueConverter
 from ..core.symbolite_object import (
     SymboliteObject,
+    get_symbolite_info,
     set_symbolite_info,
 )
 from ..core.value import Value
+from ..ops.base import free_value
 
 to_bool = ValueConverter[bool]
 
@@ -31,21 +33,30 @@ to_list = ValueConverter[list[Any]]
 to_dict = ValueConverter[tuple[tuple[Any, Any], ...]]
 
 
-class AssignInfo(NamedTuple):
-    lhs: Value[Any]
-    rhs: Any
+def _validate_block_dependencies(info: BlockInfo) -> None:
+    defined = {get_name(var) for var in info.inputs}
+
+    for line_number, ainfo in enumerate(info.lines, start=1):
+        for var in free_value(ainfo.rhs):
+            name = get_name(var)
+            if name not in defined:
+                raise ValueError(
+                    f"Block line {line_number}: value '{name}' must be provided as an input or defined in a previous line."
+                )
+
+        defined.add(get_name(ainfo.lhs))
+
+    for output in info.outputs:
+        name = get_name(output)
+        if name not in defined:
+            raise ValueError(
+                f"Block output value '{name}' must be provided as an input or defined in the block body."
+            )
 
 
 class Assign(SymboliteObject[AssignInfo]):
     def __init__(self, lhs: Value[Any], rhs: Any) -> None:
         set_symbolite_info(self, AssignInfo(lhs, rhs))
-
-
-class BlockInfo(NamedTuple):
-    inputs: tuple[Value[Any], ...]
-    outputs: tuple[Value[Any], ...]
-    lines: tuple[Assign, ...]
-    name: str = ""
 
 
 class Block(SymboliteObject[BlockInfo]):
@@ -59,7 +70,10 @@ class Block(SymboliteObject[BlockInfo]):
         *,
         name: str = "",
     ) -> None:
-        set_symbolite_info(self, BlockInfo(inputs, outputs, lines, name))
+        content = tuple(get_symbolite_info(obj) for obj in lines)
+        binfo = BlockInfo(inputs, outputs, content, name)
+        _validate_block_dependencies(binfo)
+        set_symbolite_info(self, binfo)
 
 
 @get_name.register

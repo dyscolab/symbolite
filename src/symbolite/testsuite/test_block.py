@@ -64,28 +64,24 @@ def test_block_requires_defined_user_variables():
     total = real.Real("total")
     orphan = real.Real("orphan")
 
-    block = Block(
-        inputs=(x,),
-        outputs=(total,),
-        lines=(Assign(total, x + orphan),),
-    )
-
     with pytest.raises(ValueError, match="value 'orphan'"):
-        translate(block, libpythoncode)
+        _block = Block(
+            inputs=(x,),
+            outputs=(total,),
+            lines=(Assign(total, x + orphan),),
+        )
 
 
 def test_block_requires_defined_outputs():
     x = real.Real("x")
     total = real.Real("total")
 
-    block = Block(
-        inputs=(x,),
-        outputs=(total,),
-        lines=(),
-    )
-
     with pytest.raises(ValueError, match="output value 'total'"):
-        translate(block, libpythoncode)
+        _block = Block(
+            inputs=(x,),
+            outputs=(total,),
+            lines=(),
+        )
 
 
 def test_block_custom_name():

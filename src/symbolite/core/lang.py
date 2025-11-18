@@ -9,9 +9,23 @@ Language related primitives.
 """
 
 import types
-from typing import Any
+from typing import Any, NamedTuple
+
+from .value import Value
 
 
 class ValueConverter[T]:
     def __call__(self, value: T, libsl: types.ModuleType) -> Any:
         pass
+
+
+class AssignInfo(NamedTuple):
+    lhs: Value[Any]
+    rhs: Any
+
+
+class BlockInfo(NamedTuple):
+    inputs: tuple[Value[Any], ...]
+    outputs: tuple[Value[Any], ...]
+    lines: tuple[AssignInfo, ...]
+    name: str = ""

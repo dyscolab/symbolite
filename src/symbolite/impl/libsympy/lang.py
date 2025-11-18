@@ -22,7 +22,6 @@ from sympy.codegen.ast import (
 
 from ...abstract.lang import AssignInfo, BlockInfo
 from ...ops import get_name, translate
-from .._lang_code_utils import validate_block_dependencies
 
 
 def Assign(info: AssignInfo, libsl: types.ModuleType) -> Assignment:
@@ -34,8 +33,6 @@ def Assign(info: AssignInfo, libsl: types.ModuleType) -> Assignment:
 
 def Block(info: BlockInfo, libsl: types.ModuleType):
     """Translate a BlockInfo into a Python function definition."""
-
-    validate_block_dependencies(info)
 
     parameters = tuple(
         Symbol(get_name(var, qualified=False), real=True) for var in info.inputs

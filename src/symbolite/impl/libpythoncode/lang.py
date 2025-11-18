@@ -16,13 +16,10 @@ import symbolite.impl.libpythoncode as libpythoncode
 from ...abstract.lang import AssignInfo, BlockInfo
 from ...ops._get_name import get_name
 from ...ops._translate import translate
-from .._lang_code_utils import validate_block_dependencies
 
 
 def Block(info: BlockInfo, **_: Any) -> str:
     """Translate a BlockInfo into a Python function definition."""
-
-    validate_block_dependencies(info)
 
     parameters = tuple(
         f"{get_name(var, qualified=False)}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
