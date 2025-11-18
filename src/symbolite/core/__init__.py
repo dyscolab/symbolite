@@ -12,7 +12,6 @@ A user should not need to use them directly.
 
 from .call import Call
 from .function import Function, Operator
-from .symbolgroup import SymbolicNamespace, SymbolicNamespaceMeta
 from .value import Value
 
 
@@ -23,8 +22,6 @@ class Unsupported(ValueError):
 __all__ = [
     "Call",
     "Value",
-    "SymbolicNamespace",
-    "SymbolicNamespaceMeta",
     "Function",
     "Operator",
     "Unsupported",

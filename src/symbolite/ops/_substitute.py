@@ -8,12 +8,11 @@ Replace symbols, functions, values, etc by others.
 :license: BSD, see LICENSE for more details.
 """
 
-import inspect
 from collections.abc import Mapping
 from functools import singledispatch
 from typing import Any
 
-from ..core import Call, SymbolicNamespace, SymbolicNamespaceMeta
+from ..core.call import Call
 from ..core.symbolite_object import get_symbolite_info
 from ..core.value import Name, Value
 
@@ -48,20 +47,3 @@ def substitue_call(obj: Call, mapper: Mapping[Any, Any]) -> Call:
     kwargs = {k: substitute(arg, mapper) for k, arg in info.kwargs_items}
 
     return Call(func, args, tuple(kwargs.items()))
-
-
-@substitute.register(SymbolicNamespaceMeta)
-@substitute.register(SymbolicNamespace)
-def _(
-    obj: SymbolicNamespace | SymbolicNamespaceMeta, replacements: Mapping[Any, Any]
-) -> Any:
-    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
-
-    d = {}
-    for attr_name in dir(obj):
-        if attr_name.startswith("__"):
-            continue
-        attr = getattr(obj, attr_name)
-        d[attr_name] = substitute(attr, replacements)
-
-    return type(obj.__name__, inspect.getmro(obj), d)

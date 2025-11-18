@@ -14,8 +14,6 @@ from operator import attrgetter
 from typing import Any
 
 from ..core import (
-    SymbolicNamespace,
-    SymbolicNamespaceMeta,
     Unsupported,
 )
 from ..core.call import CallInfo
@@ -130,17 +128,6 @@ def translate_operator_info(
 ) -> Any | Unsupported:
     attr_name = f"{obj.namespace}.{obj.name}"
     return attrgetter(attr_name)(libsl)
-
-
-@translate.register(SymbolicNamespaceMeta)
-@translate.register(SymbolicNamespace)
-def _(obj: SymbolicNamespace | SymbolicNamespaceMeta, libsl: types.ModuleType) -> Any:
-    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
-    return {
-        attr_name: translate(getattr(obj, attr_name), libsl)
-        for attr_name in dir(obj)
-        if not attr_name.startswith("__")
-    }
 
 
 @translate.register(CallInfo)

@@ -15,8 +15,6 @@ from typing import Any
 from ..core import (
     Call,
     Function,
-    SymbolicNamespace,
-    SymbolicNamespaceMeta,
     Value,
 )
 from ..core.function import Operator, UserFunction
@@ -73,16 +71,3 @@ def yield_named_call(obj: Call) -> Generator[SymboliteObject[Any], None, None]:
 
     for _, v in info.kwargs_items:
         yield from yield_named(v)
-
-
-@yield_named.register
-def _(
-    obj: SymbolicNamespaceMeta | SymbolicNamespace,
-) -> Generator[SymboliteObject[Any], None, None]:
-    assert isinstance(obj, (SymbolicNamespace, SymbolicNamespaceMeta))
-    for name in dir(obj):
-        if name.startswith("__"):
-            continue
-        attr = getattr(obj, name)
-        if isinstance(attr, SymboliteObject):
-            yield from yield_named(attr)
