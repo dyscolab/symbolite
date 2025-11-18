@@ -1,6 +1,6 @@
 """
-symbolite.core.ops
-~~~~~~~~~~~~~~~~~~
+symbolite.ops
+~~~~~~~~~~~~~
 
 Operations to inspect and manipulate symbolic structures:
 

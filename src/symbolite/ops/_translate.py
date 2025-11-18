@@ -1,8 +1,8 @@
 """
 symbolite.ops._translate
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Yields all named structures inside a symbolic structure.
+Translate a symbolic structure using an implementation.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.

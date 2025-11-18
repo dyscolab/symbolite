@@ -1,3 +1,13 @@
+"""
+symbolite.ops._tree_view
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Visualize symbolic structures.
+
+:copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
+:license: BSD, see LICENSE for more details.
+"""
+
 import itertools
 import sys
 from functools import singledispatch

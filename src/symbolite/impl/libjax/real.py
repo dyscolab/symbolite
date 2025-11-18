@@ -1,6 +1,6 @@
 """
 symbolite.impl.libjax.real
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Translate symbolite.abstract.real
 into values and functions defined in JAX.

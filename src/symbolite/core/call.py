@@ -1,8 +1,8 @@
 """
-symbolite.core.expression
-~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.core.call
+~~~~~~~~~~~~~~~~~~~
 
-An expression is the result of a function that has been called with
+An call is the result of a function that has been called with
 certain arguments.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.

@@ -1,6 +1,6 @@
 """
-symbolite.core.operations
-~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.ops.base
+~~~~~~~~~~~~~~~~~~
 
 Common operations to manipulate symbolic expressions.
 
@@ -13,51 +13,11 @@ from __future__ import annotations
 import collections
 import types
 import warnings
-from collections.abc import Iterable
 from typing import Any, Callable
 
 from ..core.symbolite_object import get_symbolite_info
 from ..core.value import Name, Value
 from ._get_name import get_name, get_namespace
-
-
-def build_function_code(
-    name: str,
-    parameters: Iterable[str],
-    body: Iterable[str],
-    return_variables: Iterable[str],
-    *,
-    return_annotation: str | None = None,
-) -> str:
-    """Build function code.
-
-    Parameters
-    ----------
-    name
-        Name of the functions.
-    parameters
-        Name of the parameters.
-    body
-        Lines in the body of the function.
-    return_variables
-        Name of the return variables.
-    return_annotation
-        Optional return type annotation.
-    """
-
-    header = f"def {name}({', '.join(parameters)})"
-    if return_annotation:
-        header += f" -> {return_annotation}"
-
-    body_lines = list(body)
-    parts = [f"{header}:"]
-
-    if body_lines:
-        parts.append("    " + "\n    ".join(body_lines))
-
-    parts.append(f"    return {', '.join(return_variables)}")
-
-    return "\n".join(parts)
 
 
 def count_named(obj: Any) -> dict[Any, int]:

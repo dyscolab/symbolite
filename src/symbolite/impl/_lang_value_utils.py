@@ -3,6 +3,9 @@ symbolite.impl._lang_value_utils
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Runtime helpers for language-level constructs.
+
+:copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
+:license: BSD, see LICENSE for more details.
 """
 
 from __future__ import annotations

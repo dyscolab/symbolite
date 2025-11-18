@@ -1,6 +1,6 @@
 """
-symbolite.core.ops._as_code
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.ops._as_code
+~~~~~~~~~~~~~~~~~~~~~~
 
 Convert a symbolite object to python code.
 

@@ -1,6 +1,6 @@
 """
-symbolite.core.base
-~~~~~~~~~~~~~~~~~~~~
+symbolite.core.symbolite_object
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Provides basic funtionality for all symbolic objects.
 

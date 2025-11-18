@@ -12,14 +12,13 @@ import random
 import string
 from typing import Any, NamedTuple
 
-from symbolite.core.symbolite_object import (
+from .call import Call
+from .symbolite_object import (
     SymboliteObject,
     get_symbolite_info,
     set_name,
     set_symbolite_info,
 )
-
-from .call import Call
 
 
 def id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits):

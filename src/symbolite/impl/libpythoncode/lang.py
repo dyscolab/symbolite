@@ -3,6 +3,9 @@ symbolite.impl.libpythoncode.lang
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Code-emitting counterparts for language primitives.
+
+:copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
+:license: BSD, see LICENSE for more details.
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 """
-symbolite.core.util
-~~~~~~~~~~~~~~~~~~~
+symbolite.ops.util
+~~~~~~~~~~~~~~~~~~
 
 Symbolite core util functions.
 

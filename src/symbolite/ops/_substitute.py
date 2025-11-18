@@ -1,6 +1,6 @@
 """
-symbolite.core.ops.substitute
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.ops._substitute
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Replace symbols, functions, values, etc by others.
 

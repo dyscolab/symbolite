@@ -1,4 +1,12 @@
-"""Utilities to retrieve symbolic names in a consistent way."""
+"""
+symbolite.ops._get_name
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Utilities to retrieve symbolic names in a consistent way.
+
+:copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
+:license: BSD, see LICENSE for more details.
+"""
 
 from __future__ import annotations
 

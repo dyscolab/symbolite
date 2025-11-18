@@ -1,6 +1,6 @@
 """
 symbolite.impl.libnumpy.real
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Translate symbolite.abstract.real
 into values and functions defined in NumPy.

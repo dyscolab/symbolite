@@ -1,6 +1,6 @@
 """
-symbolite.core.ops.yield_named
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.ops._yield_named
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Yields all named structures inside a symbolic structure.
 
