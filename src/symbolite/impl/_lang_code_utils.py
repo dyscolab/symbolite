@@ -5,9 +5,9 @@ Shared utilities to translate language-level constructs such as blocks.
 from __future__ import annotations
 
 from ..abstract.lang import BlockInfo
-from ..core.variable import get_symbolite_info
+from ..core.value import get_symbolite_info
 from ..ops._get_name import get_name
-from ..ops.base import free_variables
+from ..ops.base import free_value
 
 
 def validate_block_dependencies(info: BlockInfo) -> None:
@@ -15,11 +15,11 @@ def validate_block_dependencies(info: BlockInfo) -> None:
 
     for line_number, assignment in enumerate(info.lines, start=1):
         ainfo = get_symbolite_info(assignment)
-        for var in free_variables(ainfo.rhs):
+        for var in free_value(ainfo.rhs):
             name = get_name(var)
             if name not in defined:
                 raise ValueError(
-                    f"Block line {line_number}: variable '{name}' must be provided as an input or defined in a previous line."
+                    f"Block line {line_number}: value '{name}' must be provided as an input or defined in a previous line."
                 )
 
         defined.add(get_name(ainfo.lhs))
@@ -28,7 +28,7 @@ def validate_block_dependencies(info: BlockInfo) -> None:
         name = get_name(output)
         if name not in defined:
             raise ValueError(
-                f"Block output variable '{name}' must be provided as an input or defined in the block body."
+                f"Block output value '{name}' must be provided as an input or defined in the block body."
             )
 
 

@@ -15,7 +15,7 @@ from typing import Any
 
 from ..core import Call, SymbolicNamespace, SymbolicNamespaceMeta
 from ..core.symbolite_object import get_symbolite_info
-from ..core.variable import Name, Variable
+from ..core.value import Name, Value
 
 
 @singledispatch
@@ -32,8 +32,8 @@ def substitute(obj: Any, replacements: Mapping[Any, Any]) -> Any:
     return replacements.get(obj, obj)
 
 
-@substitute.register(Variable)
-def substitute_variable[R: Variable[Any]](obj: R, mapper: Mapping[Any, Any]) -> R:
+@substitute.register(Value)
+def substitute_value[R: Value[Any]](obj: R, mapper: Mapping[Any, Any]) -> R:
     info = get_symbolite_info(obj)
     if isinstance(info.value, Name):
         return mapper.get(obj, obj)

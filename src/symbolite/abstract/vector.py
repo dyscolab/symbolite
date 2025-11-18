@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, overload
 
-from ..core import Variable
+from ..core import Value
 from ..core.function import (
     BinaryOperator,
     UnaryFunction,
@@ -26,10 +26,10 @@ from .symbol import Symbol
 VectorT = Iterable[NumberT]
 
 
-class Vector(Variable[VectorT]):
-    """Vector Symbolic variable.
+class Vector(Value[VectorT]):
+    """Vector Symbolic value.
 
-    See Symbol and Variable for information
+    See Symbol and Value for information
     """
 
     def eq(self, other: Any) -> Boolean:
@@ -185,7 +185,7 @@ def vectorize(
         which will be mapped to the indices given by their position.
         if a dict, maps symbol names to indices.
     varname
-        name of the array variable
+        name of the array value
     """
     if isinstance(expr, NumberT):
         return expr
@@ -246,7 +246,7 @@ def auto_vectorize(
     ----------
     expr
     varname
-        name of the array variable
+        name of the array value
 
     Returns
     -------

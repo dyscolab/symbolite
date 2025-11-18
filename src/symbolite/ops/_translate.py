@@ -21,7 +21,7 @@ from ..core import (
 from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
-from ..core.variable import Name, Variable
+from ..core.value import Name, Value
 from ._get_name import get_name
 
 
@@ -89,8 +89,8 @@ def translate_symbolite_object(
     return translate(info, libsl)
 
 
-@translate.register(Variable)
-def translate_variable(obj: Variable[Any], libsl: types.ModuleType) -> Any:
+@translate.register(Value)
+def translate_value(obj: Value[Any], libsl: types.ModuleType) -> Any:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
         return translate(info.value, libsl)

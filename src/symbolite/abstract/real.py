@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..core import Variable
+from ..core import Value
 from ..core.function import (
     BinaryFunction,
     BinaryOperator,
@@ -25,10 +25,10 @@ from .boolean import Boolean
 NumberT = int | float
 
 
-class Real(Variable[NumberT]):
-    """Real number symbolic variable.
+class Real(Value[NumberT]):
+    """Real number symbolic value.
 
-    See Symbol and Variable for more information.
+    See Symbol and Value for more information.
     """
 
     def eq(self, other: Any) -> Boolean:

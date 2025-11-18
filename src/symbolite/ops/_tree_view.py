@@ -3,11 +3,11 @@ import sys
 from functools import singledispatch
 from typing import Any, Protocol, TypeVar
 
-from ..core import Variable
+from ..core import Value
 from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
-from ..core.variable import Name
+from ..core.value import Name
 from ..ops._get_name import get_name
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -100,8 +100,8 @@ def tree_view_call(obj: CallInfo, pretty_printer: Printer | None = None):
     pretty_printer.append(")")
 
 
-@tree_view.register(Variable)
-def tree_view_variable(obj: Variable[Any], pretty_printer: Printer | None = None):
+@tree_view.register(Value)
+def tree_view_value(obj: Value[Any], pretty_printer: Printer | None = None):
     pretty_printer = pretty_printer or _default_printer()
     info = get_symbolite_info(obj)
     if isinstance(info.value, Name):

@@ -70,7 +70,7 @@ def test_block_requires_defined_user_variables():
         lines=(Assign(total, x + orphan),),
     )
 
-    with pytest.raises(ValueError, match="variable 'orphan'"):
+    with pytest.raises(ValueError, match="value 'orphan'"):
         translate(block, libpythoncode)
 
 
@@ -84,7 +84,7 @@ def test_block_requires_defined_outputs():
         lines=(),
     )
 
-    with pytest.raises(ValueError, match="output variable 'total'"):
+    with pytest.raises(ValueError, match="output value 'total'"):
         translate(block, libpythoncode)
 
 

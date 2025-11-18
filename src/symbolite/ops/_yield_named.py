@@ -17,11 +17,11 @@ from ..core import (
     Function,
     SymbolicNamespace,
     SymbolicNamespaceMeta,
-    Variable,
+    Value,
 )
 from ..core.function import Operator, UserFunction
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
-from ..core.variable import Name
+from ..core.value import Name
 
 
 @singledispatch
@@ -46,9 +46,9 @@ def yield_named_symbolite_object(
     yield from yield_named(info)
 
 
-@yield_named.register(Variable)
-def yield_named_variable(
-    obj: Variable[Any],
+@yield_named.register(Value)
+def yield_named_value(
+    obj: Value[Any],
 ) -> Generator[SymboliteObject[Any], None, None]:
     info = get_symbolite_info(obj)
     if isinstance(info.value, Name):

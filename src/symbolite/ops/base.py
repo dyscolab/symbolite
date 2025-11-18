@@ -17,7 +17,7 @@ from collections.abc import Iterable
 from typing import Any, Callable
 
 from ..core.symbolite_object import get_symbolite_info
-from ..core.variable import Name, Variable
+from ..core.value import Name, Value
 from ._get_name import get_name, get_namespace
 
 
@@ -119,21 +119,21 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     return _unwrap_translation(result)
 
 
-def is_free_variable(obj: Any) -> bool:
-    from ..core.variable import Variable
+def is_free_value(obj: Any) -> bool:
+    from ..core.value import Value
 
-    if not isinstance(obj, Variable):
+    if not isinstance(obj, Value):
         return False
 
     info = get_symbolite_info(obj)
     return isinstance(info.value, Name) and info.value.namespace == ""
 
 
-def free_variables(obj: Any) -> tuple[Variable[Any], ...]:
+def free_value(obj: Any) -> tuple[Value[Any], ...]:
     from . import yield_named
 
     seen: list[Any] = []
-    for el in filter(is_free_variable, yield_named(obj)):
+    for el in filter(is_free_value, yield_named(obj)):
         if el not in seen:
             seen.append(el)
 

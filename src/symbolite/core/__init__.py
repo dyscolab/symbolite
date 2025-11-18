@@ -13,7 +13,7 @@ A user should not need to use them directly.
 from .call import Call
 from .function import Function, Operator
 from .symbolgroup import SymbolicNamespace, SymbolicNamespaceMeta
-from .variable import Variable
+from .value import Value
 
 
 class Unsupported(ValueError):
@@ -22,7 +22,7 @@ class Unsupported(ValueError):
 
 __all__ = [
     "Call",
-    "Variable",
+    "Value",
     "SymbolicNamespace",
     "SymbolicNamespaceMeta",
     "Function",

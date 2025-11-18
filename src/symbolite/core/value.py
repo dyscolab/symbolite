@@ -1,8 +1,8 @@
 """
-symbolite.core.variable
-~~~~~~~~~~~~~~~~~~~~~~~
+symbolite.core.value
+~~~~~~~~~~~~~~~~~~~~
 
-Symbolic variable.
+Symbolic value.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.
@@ -31,16 +31,16 @@ class Name(NamedTuple):
     namespace: str
 
 
-class VariableInfo[PT](NamedTuple):
-    # Used to specify the actual value (if any) of the variable.
+class ValueInfo[PT](NamedTuple):
+    # Used to specify the actual value (if any) of the value.
     # - Name
     # - Call: the result of a function call or operations.
-    # - PT: python types compatible with this variable.
+    # - PT: python types compatible with this value.
     value: Name | Call | PT
 
 
-class Variable[PT](SymboliteObject[VariableInfo[PT]]):
-    """A symbolic variable."""
+class Value[PT](SymboliteObject[ValueInfo[PT]]):
+    """A symbolic value."""
 
     def __init__(self, name_or_value: Call | Name | PT | str = "") -> None:
         if isinstance(name_or_value, str):
@@ -54,13 +54,13 @@ class Variable[PT](SymboliteObject[VariableInfo[PT]]):
                     name_or_value = Name(parts[1], parts[0])
                 else:
                     raise ValueError(
-                        f"Invalid variable name: expected <name> or <namespace>.<name>, got {name_or_value!r}"
+                        f"Invalid value name: expected <name> or <namespace>.<name>, got {name_or_value!r}"
                     )
-        set_symbolite_info(self, VariableInfo(name_or_value))
+        set_symbolite_info(self, ValueInfo(name_or_value))
 
 
-@set_name.register(Variable)
-def set_name_variable(obj: Variable[Any], owner: Any, name: str):
+@set_name.register(Value)
+def set_name_value(obj: Value[Any], owner: Any, name: str):
     info = get_symbolite_info(obj)
 
     value = info.value
@@ -77,4 +77,4 @@ def set_name_variable(obj: Variable[Any], owner: Any, name: str):
                 f"Mismatched names in attribute {name}: {type(obj)} is named {current_name}"
             )
 
-        set_symbolite_info(obj, VariableInfo(Name(name, "")))
+        set_symbolite_info(obj, ValueInfo(Name(name, "")))

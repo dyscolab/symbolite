@@ -16,7 +16,7 @@ from ..core.symbolite_object import (
     SymboliteObject,
     set_symbolite_info,
 )
-from ..core.variable import Variable
+from ..core.value import Value
 
 to_bool = ValueConverter[bool]
 
@@ -32,18 +32,18 @@ to_dict = ValueConverter[tuple[tuple[Any, Any], ...]]
 
 
 class AssignInfo(NamedTuple):
-    lhs: Variable[Any]
+    lhs: Value[Any]
     rhs: Any
 
 
 class Assign(SymboliteObject[AssignInfo]):
-    def __init__(self, lhs: Variable[Any], rhs: Any) -> None:
+    def __init__(self, lhs: Value[Any], rhs: Any) -> None:
         set_symbolite_info(self, AssignInfo(lhs, rhs))
 
 
 class BlockInfo(NamedTuple):
-    inputs: tuple[Variable[Any], ...]
-    outputs: tuple[Variable[Any], ...]
+    inputs: tuple[Value[Any], ...]
+    outputs: tuple[Value[Any], ...]
     lines: tuple[Assign, ...]
     name: str = ""
 
@@ -53,8 +53,8 @@ class Block(SymboliteObject[BlockInfo]):
 
     def __init__(
         self,
-        inputs: tuple[Variable[Any], ...],
-        outputs: tuple[Variable[Any], ...],
+        inputs: tuple[Value[Any], ...],
+        outputs: tuple[Value[Any], ...],
         lines: tuple[Assign, ...],
         *,
         name: str = "",

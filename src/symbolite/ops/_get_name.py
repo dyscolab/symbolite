@@ -7,7 +7,7 @@ from typing import Any
 
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
-from ..core.variable import Name, VariableInfo
+from ..core.value import Name, ValueInfo
 
 
 @singledispatch
@@ -23,8 +23,8 @@ def get_name_symbolite_object(obj: SymboliteObject[Any], qualified: bool = True)
     return get_name(info, qualified=qualified)
 
 
-@get_name.register(VariableInfo)
-def get_name_variable(obj: VariableInfo[Any], qualified: bool = True) -> str:
+@get_name.register(ValueInfo)
+def get_name_value(obj: ValueInfo[Any], qualified: bool = True) -> str:
     if isinstance(obj.value, Name):
         return get_name(obj.value, qualified=qualified)
     else:
@@ -65,8 +65,8 @@ def get_namespace_symbolite_object(obj: SymboliteObject[Any]) -> str | None:
     return get_namespace(info)
 
 
-@get_namespace.register(VariableInfo)
-def get_namespace_variable(obj: VariableInfo[Any]) -> str | None:
+@get_namespace.register(ValueInfo)
+def get_namespace_value(obj: ValueInfo[Any]) -> str | None:
     if isinstance(obj.value, Name):
         return obj.value.namespace
     return None

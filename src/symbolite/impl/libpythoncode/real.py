@@ -12,7 +12,7 @@ from symbolite.abstract import real as abstract_real
 from ._codeexpr import (
     CodeExpr,
     as_function,
-    as_named_variable,
+    as_named_value,
     as_operator,
     make_function,
 )
@@ -104,11 +104,11 @@ def pow(*args: object, **kwargs: object):
     return _pow_call(*args, **kwargs)
 
 
-e = as_named_variable(abstract_real.e)
-inf = as_named_variable(abstract_real.inf)
-pi = as_named_variable(abstract_real.pi)
-nan = as_named_variable(abstract_real.nan)
-tau = as_named_variable(abstract_real.tau)
+e = as_named_value(abstract_real.e)
+inf = as_named_value(abstract_real.inf)
+pi = as_named_value(abstract_real.pi)
+nan = as_named_value(abstract_real.nan)
+tau = as_named_value(abstract_real.tau)
 
 __all__ = [
     "Real",

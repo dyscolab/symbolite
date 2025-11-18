@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ..core import Variable
+from ..core import Value
 from ..core.function import (
     BinaryOperator,
     Function3,
@@ -21,8 +21,8 @@ from ..core.function import (
 from .boolean import Boolean
 
 
-class Symbol(Variable[Any]):
-    """General purpose symbolic variable.
+class Symbol(Value[Any]):
+    """General purpose symbolic value.
 
     The following magic methods are not mapped to symbolite Functions
       - __hash__, __eq__, __ne__ collides with reasonble use of comparisons
@@ -45,7 +45,7 @@ class Symbol(Variable[Any]):
     Also, magic methods that are statements (not expressions) are also not
     mapped: e.g. __setitem__ or __delitem__
 
-    See Variable for more information.
+    See Value for more information.
     """
 
     # Comparison methods (not operator)

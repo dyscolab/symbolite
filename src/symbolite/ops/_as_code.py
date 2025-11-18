@@ -13,10 +13,10 @@ from typing import Any
 
 from symbolite.core import SymbolicNamespace, SymbolicNamespaceMeta
 from symbolite.core.symbolite_object import get_symbolite_info
-from symbolite.core.variable import Name, Variable
+from symbolite.core.value import Name, Value
 
 from ._get_name import get_name
-from .base import free_variables
+from .base import free_value
 
 
 @singledispatch
@@ -43,7 +43,7 @@ def _(obj: SymbolicNamespaceMeta | SymbolicNamespace) -> str:
 
     assign = lambda a, b: f"{a} = {b}"  # noqa: E731
 
-    for free_var in free_variables(obj):
+    for free_var in free_value(obj):
         info = get_symbolite_info(free_var)
         assert isinstance(info.value, Name)
         name = get_name(info.value, qualified=False)
@@ -53,7 +53,7 @@ def _(obj: SymbolicNamespaceMeta | SymbolicNamespace) -> str:
 
     for attr_name in dir(obj):
         attr = getattr(obj, attr_name)
-        if not isinstance(attr, Variable):
+        if not isinstance(attr, Value):
             continue
         info = get_symbolite_info(attr)
         if isinstance(info.value, Name):

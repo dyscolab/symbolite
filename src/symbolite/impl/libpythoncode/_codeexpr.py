@@ -9,7 +9,7 @@ from typing import Any, Iterable
 
 from symbolite.core.function import Function, Operator
 from symbolite.core.symbolite_object import get_symbolite_info
-from symbolite.core.variable import Name, Variable
+from symbolite.core.value import Name, Value
 from symbolite.ops._get_name import get_name
 
 
@@ -101,9 +101,9 @@ def as_operator(obj: Operator[Any]) -> Any:
     return make_operator(info.fmt, info.precedence, info.arity)
 
 
-def as_named_variable(obj: Variable[Any]) -> CodeExpr:
+def as_named_value(obj: Value[Any]) -> CodeExpr:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
-        raise ValueError(f"Variable {obj!r} is not bound to a Name.")
+        raise ValueError(f"Value {obj!r} is not bound to a Name.")
     qualified_name = get_name(obj, qualified=True)
     return make_attribute(qualified_name)

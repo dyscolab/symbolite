@@ -12,14 +12,14 @@ from __future__ import annotations
 
 from typing import Self
 
-from ..core import Variable
+from ..core import Value
 from ..core.function import BinaryOperator
 
 
-class Boolean(Variable[bool]):
-    """Boolean symbolic variable.
+class Boolean(Value[bool]):
+    """Boolean symbolic value.
 
-    See Symbol and Variable for more information.
+    See Symbol and Value for more information.
     """
 
     def __and__(self, other: Self) -> Boolean:

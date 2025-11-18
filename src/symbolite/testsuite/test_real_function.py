@@ -6,10 +6,10 @@ import pytest
 
 from symbolite import Symbol, real
 from symbolite.abstract.lang import Assign, Block
-from symbolite.core.variable import Variable
+from symbolite.core.value import Value
 from symbolite.impl import get_all_implementations
 from symbolite.ops import substitute, translate
-from symbolite.ops.base import free_variables, symbol_names
+from symbolite.ops.base import free_value, symbol_names
 
 all_impl = get_all_implementations()
 
@@ -18,10 +18,10 @@ x, y, z = map(real.Real, "x y z".split())
 xsy = real.Real("xsy")
 
 
-def _make_block_from_variable(expr: Variable[Any], *, name: str = "f") -> Block:
+def _make_block_from_variable(expr: Value[Any], *, name: str = "f") -> Block:
     result = expr.__class__("__result")
     return Block(
-        inputs=free_variables(expr),
+        inputs=free_value(expr),
         outputs=(result,),
         lines=(Assign(result, expr),),
         name=name,
@@ -58,7 +58,7 @@ def _block_factory_f3() -> Block:
     total = real.Real("total")
     triple = real.Real("triple")
     quadruple = real.Real("quadruple")
-    result: Variable[Any] = Variable("result")
+    result: Value[Any] = Value("result")
     return Block(
         inputs=(x, y, z),
         outputs=(result,),
@@ -102,7 +102,7 @@ def test_typing():
     ],
 )
 @pytest.mark.parametrize("libsl", all_impl.values(), ids=all_impl.keys())
-def test_known_symbols(expr: Variable, libsl: types.ModuleType):
+def test_known_symbols(expr: Value, libsl: types.ModuleType):
     block = _make_block_from_variable(expr)
     f = translate(block, libsl=libsl)
     if inspect.isfunction(f):
@@ -136,7 +136,7 @@ def test_block_execution(block_factory, params, args, result, libsl: types.Modul
     ],
 )
 @pytest.mark.parametrize("libsl", all_impl.values(), ids=all_impl.keys())
-def test_lib_symbols(expr: Variable[Any], replaced: Symbol, libsl: types.ModuleType):
+def test_lib_symbols(expr: Value[Any], replaced: Symbol, libsl: types.ModuleType):
     block = _make_block_from_variable(expr)
     f = translate(block, libsl=libsl)
     if inspect.isfunction(f):
@@ -169,5 +169,5 @@ def test_lib_symbols(expr: Variable[Any], replaced: Symbol, libsl: types.ModuleT
         ),
     ],
 )
-def test_list_symbols(expr: Variable[Any], namespace: str | None, result: Symbol):
+def test_list_symbols(expr: Value[Any], namespace: str | None, result: Symbol):
     assert symbol_names(expr, namespace) == result

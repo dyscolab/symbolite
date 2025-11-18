@@ -15,16 +15,16 @@ from typing import Any, Callable, Literal, NamedTuple, Protocol, Self, cast
 
 from .call import Call
 from .symbolite_object import SymboliteObject, get_symbolite_info, set_symbolite_info
-from .variable import Variable
+from .value import Value
 
 
-class SymbolicCallable[O: Variable[Any]](Protocol):
+class SymbolicCallable[O: Value[Any]](Protocol):
     """A callable tha returns a symbolic object."""
 
     def __call__(self, *args: Any, **kwds: Any) -> O: ...
 
 
-class FunctionInfo[O: Variable[Any]](NamedTuple):
+class FunctionInfo[O: Value[Any]](NamedTuple):
     name: str
     namespace: str
     # Use None to indicate that the arity is unknown or it has keyword arguments
@@ -33,8 +33,8 @@ class FunctionInfo[O: Variable[Any]](NamedTuple):
     output_type: type[O]
 
 
-class Function[O: Variable[Any]](SymboliteObject[FunctionInfo[O]]):
-    """A callable primitive that will return a Variable with a Call as value."""
+class Function[O: Value[Any]](SymboliteObject[FunctionInfo[O]]):
+    """A callable primitive that will return a Value with a Call as value."""
 
     def __init__(
         self,
@@ -64,7 +64,7 @@ class Function[O: Variable[Any]](SymboliteObject[FunctionInfo[O]]):
         return info.output_type(expr)
 
 
-class UnaryFunction[I, O: Variable[Any]](Function[O]):
+class UnaryFunction[I, O: Value[Any]](Function[O]):
     def __init__(self, name: str, namespace: str = "", *, output_type: type[O]) -> None:
         set_symbolite_info(self, FunctionInfo(name, namespace, 1, output_type))
 
@@ -72,7 +72,7 @@ class UnaryFunction[I, O: Variable[Any]](Function[O]):
         return super().__call__(arg1)
 
 
-class BinaryFunction[I, O: Variable[Any]](Function[O]):
+class BinaryFunction[I, O: Value[Any]](Function[O]):
     def __init__(self, name: str, namespace: str = "", *, output_type: type[O]) -> None:
         set_symbolite_info(self, FunctionInfo(name, namespace, 2, output_type))
 
@@ -80,7 +80,7 @@ class BinaryFunction[I, O: Variable[Any]](Function[O]):
         return super().__call__(arg1, arg2)
 
 
-class Function3[I, O: Variable[Any]](Function[O]):
+class Function3[I, O: Value[Any]](Function[O]):
     def __init__(self, name: str, namespace: str = "", *, output_type: type[O]) -> None:
         set_symbolite_info(self, FunctionInfo(name, namespace, 3, output_type))
 
@@ -88,7 +88,7 @@ class Function3[I, O: Variable[Any]](Function[O]):
         return super().__call__(arg1, arg2, arg3)
 
 
-class OperatorInfo[O: Variable[Any]](NamedTuple):
+class OperatorInfo[O: Value[Any]](NamedTuple):
     name: str
     namespace: str
     fmt: str
@@ -97,8 +97,8 @@ class OperatorInfo[O: Variable[Any]](NamedTuple):
     precedence: int
 
 
-class Operator[O: Variable[Any]](SymboliteObject[OperatorInfo[O]]):
-    """A callable primitive that will return a Variable with a Call as value.
+class Operator[O: Value[Any]](SymboliteObject[OperatorInfo[O]]):
+    """A callable primitive that will return a Value with a Call as value.
 
     Unlike Function, Operators has a precedence that allow to write it back
     as string in algebraic manner.
@@ -131,14 +131,14 @@ class Operator[O: Variable[Any]](SymboliteObject[OperatorInfo[O]]):
         return info.output_type(expr)
 
 
-class UnaryOperator[I, O: Variable[Any]](Operator[O]):
+class UnaryOperator[I, O: Value[Any]](Operator[O]):
     def __init__(
         self,
         name: str,
         namespace: str = "",
         *,
         fmt: str,
-        output_type: type[O] = Variable,
+        output_type: type[O] = Value,
         precedence: int = 0,
     ) -> None:
         super().__init__(
@@ -154,14 +154,14 @@ class UnaryOperator[I, O: Variable[Any]](Operator[O]):
         return super().__call__(arg1)
 
 
-class BinaryOperator[I1, I2, O: Variable[Any]](Operator[O]):
+class BinaryOperator[I1, I2, O: Value[Any]](Operator[O]):
     def __init__(
         self,
         name: str,
         namespace: str = "",
         *,
         fmt: str,
-        output_type: type[O] = Variable,
+        output_type: type[O] = Value,
         precedence: int = 0,
     ) -> None:
         super().__init__(
@@ -177,7 +177,7 @@ class BinaryOperator[I1, I2, O: Variable[Any]](Operator[O]):
         return super().__call__(arg1, arg2)
 
 
-class UserFunctionInfo[P, T, O: Variable[Any]](NamedTuple):
+class UserFunctionInfo[P, T, O: Value[Any]](NamedTuple):
     name: str
     namespace: str
     # Use None to indicate that the arity is unknown or it has keyword arguments
@@ -187,7 +187,7 @@ class UserFunctionInfo[P, T, O: Variable[Any]](NamedTuple):
     impls: tuple[tuple[types.ModuleType | Literal["default"], Callable[[P], T]], ...]
 
 
-class UserFunction[P, T, O: Variable[Any]](SymboliteObject[UserFunctionInfo[P, T, O]]):
+class UserFunction[P, T, O: Value[Any]](SymboliteObject[UserFunctionInfo[P, T, O]]):
     def __init__(
         self,
         name: str,
@@ -205,7 +205,7 @@ class UserFunction[P, T, O: Variable[Any]](SymboliteObject[UserFunctionInfo[P, T
         obj = cls(
             name=func.__name__,
             namespace="",
-            output_type=cast(type[O], Variable),
+            output_type=cast(type[O], Value),
         )
         obj.register_impl(func, libsl="default")
         return obj
