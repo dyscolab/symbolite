@@ -9,7 +9,7 @@ from symbolite.abstract.lang import Assign, Block
 from symbolite.core.value import Value
 from symbolite.impl import get_all_implementations
 from symbolite.ops import substitute, translate
-from symbolite.ops.base import free_value, symbol_names
+from symbolite.ops.base import free_values, value_names
 
 all_impl = get_all_implementations()
 
@@ -21,7 +21,7 @@ xsy = real.Real("xsy")
 def _make_block_from_variable(expr: Value[Any], *, name: str = "f") -> Block:
     result = expr.__class__("__result")
     return Block(
-        inputs=free_value(expr),
+        inputs=free_values(expr),
         outputs=(result,),
         lines=(Assign(result, expr),),
         name=name,
@@ -170,4 +170,4 @@ def test_lib_symbols(expr: Value[Any], replaced: Symbol, libsl: types.ModuleType
     ],
 )
 def test_list_symbols(expr: Value[Any], namespace: str | None, result: Symbol):
-    assert symbol_names(expr, namespace) == result
+    assert value_names(expr, namespace) == result

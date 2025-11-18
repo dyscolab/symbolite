@@ -37,20 +37,6 @@ def count_named(obj: Any) -> dict[Any, int]:
     return {obj: 1}
 
 
-def _unwrap_translation(value: Any) -> Any:
-    from ..impl.libpythoncode._codeexpr import CodeExpr
-
-    if isinstance(value, CodeExpr):
-        return value.text
-    if isinstance(value, tuple):
-        return tuple(_unwrap_translation(v) for v in value)
-    if isinstance(value, list):
-        return [_unwrap_translation(v) for v in value]
-    if isinstance(value, dict):
-        return {k: _unwrap_translation(v) for k, v in value.items()}
-    return value
-
-
 def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     """Translate expression into a backend representation.
 
@@ -75,8 +61,7 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
                 f"Implementation module {libsl} of kind {libsl.KIND} cannot be used for evaluation."
             )
 
-    result = translate(expr, libsl)
-    return _unwrap_translation(result)
+    return translate(expr, libsl)
 
 
 def is_free_value(obj: Any) -> bool:
@@ -89,7 +74,7 @@ def is_free_value(obj: Any) -> bool:
     return isinstance(info.value, Name) and info.value.namespace == ""
 
 
-def free_value(obj: Any) -> tuple[Value[Any], ...]:
+def free_values(obj: Any) -> tuple[Value[Any], ...]:
     from . import yield_named
 
     seen: list[Any] = []
@@ -100,13 +85,6 @@ def free_value(obj: Any) -> tuple[Value[Any], ...]:
     return tuple(seen)
 
 
-def symbol_namespaces(self: Any) -> set[str]:
-    """Return a set of symbol libraries"""
-    from . import yield_named
-
-    return {get_name(s).namespace for s in yield_named(self)}
-
-
 def compare_namespace(namespace: str) -> Callable[[Any], bool]:
     def _inner(obj: Any) -> bool:
         return get_namespace(obj) == namespace
@@ -114,15 +92,15 @@ def compare_namespace(namespace: str) -> Callable[[Any], bool]:
     return _inner
 
 
-def symbol_names(self: Any, namespace: str | None = "") -> set[str]:
-    """Return a set of symbol names (with full namespace indication).
+def value_names(self: Any, namespace: str | None = "") -> set[str]:
+    """Return a set of value names (with full namespace indication).
 
     Parameters
     ----------
     namespace: str or None
-        If None, all symbols will be returned independently of the namespace.
-        If a string, will compare Symbol.namespace to that.
-        Defaults to "" which is the namespace for user defined symbols.
+        If None, all values will be returned independently of the namespace.
+        If a string, will compare valu.namespace to that.
+        Defaults to "" which is the namespace for user defined values.
     """
     from . import yield_named
 

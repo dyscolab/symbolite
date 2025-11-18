@@ -18,7 +18,7 @@ from ..core.symbolite_object import (
     set_symbolite_info,
 )
 from ..core.value import Value
-from ..ops.base import free_value
+from ..ops.base import free_values
 
 to_bool = ValueConverter[bool]
 
@@ -37,7 +37,7 @@ def _validate_block_dependencies(info: BlockInfo) -> None:
     defined = {get_name(var) for var in info.inputs}
 
     for line_number, ainfo in enumerate(info.lines, start=1):
-        for var in free_value(ainfo.rhs):
+        for var in free_values(ainfo.rhs):
             name = get_name(var)
             if name not in defined:
                 raise ValueError(

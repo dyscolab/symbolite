@@ -10,7 +10,7 @@ from symbolite.impl import find_module_in_stack, libpythoncode
 from symbolite.impl.libpythoncode._codeexpr import make_function
 from symbolite.ops import substitute
 from symbolite.ops._as_code import as_code
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import evaluate, value_names
 
 x, y, z = map(Symbol, "x y z".split())
 
@@ -112,7 +112,7 @@ def test_subs(expr: Symbol, result: Symbol):
     ],
 )
 def test_symbol_names(expr: Symbol, result: set[str]):
-    assert symbol_names(expr) == result
+    assert value_names(expr) == result
 
 
 @pytest.mark.parametrize(
@@ -125,7 +125,7 @@ def test_symbol_names(expr: Symbol, result: set[str]):
     ],
 )
 def test_symbol_names_ops(expr: Symbol, result: set[str]):
-    assert symbol_names(expr, None) == result
+    assert value_names(expr, None) == result
 
 
 @pytest.mark.parametrize(
@@ -141,7 +141,7 @@ def test_symbol_names_ops(expr: Symbol, result: set[str]):
     ],
 )
 def test_symbol_names_namespace(expr: Symbol, result: Symbol):
-    assert symbol_names(expr, namespace="lib") == result
+    assert value_names(expr, namespace="lib") == result
 
 
 class Real(Symbol):

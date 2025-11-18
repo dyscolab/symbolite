@@ -11,7 +11,7 @@ Objects and functions for vector operations.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, overload
+from typing import Any, cast, overload
 
 from ..core import Value
 from ..core.function import (
@@ -142,63 +142,69 @@ prod = UnaryFunction[Vector, Real]("prod", "vector", output_type=Real)
 
 
 @overload
-def vectorize(
+def vectorize[T: Value[Any]](
     expr: NumberT,
-    symbol_names: Sequence[str] | Mapping[str, int],
-    varname: str = "vec",
-    scalar_type: type[Real] = Real,
+    input_names: Sequence[str] | Mapping[str, int],
+    output_name: str = "vec",
+    scalar_type: type[T] = Real,
 ) -> NumberT: ...
 
 
 @overload
-def vectorize(
-    expr: Real,
-    symbol_names: Sequence[str] | Mapping[str, int],
-    varname: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> Real: ...
+def vectorize[T: Value[Any]](
+    expr: T,
+    input_names: Sequence[str] | Mapping[str, int],
+    output_name: str = "vec",
+    scalar_type: type[T] = Real,
+) -> T: ...
 
 
 @overload
-def vectorize(
-    expr: Iterable[NumberT | Real],
-    symbol_names: Sequence[str] | Mapping[str, int],
-    varname: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> tuple[NumberT | Real, ...]: ...
+def vectorize[T: Value[Any]](
+    expr: Iterable[NumberT | T],
+    input_names: Sequence[str] | Mapping[str, int],
+    output_name: str = "vec",
+    scalar_type: type[T] = Real,
+) -> tuple[NumberT | T, ...]: ...
 
 
-def vectorize(
-    expr: NumberT | Real | Iterable[NumberT | Real],
-    symbol_names: Sequence[str] | Mapping[str, int],
-    varname: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> NumberT | Real | Vector | tuple[NumberT | Real | Vector, ...]:
-    """Vectorize expression by replacing real symbols
+def vectorize[T: Value[Any]](
+    expr: NumberT | T | Iterable[NumberT | T],
+    input_names: Sequence[str] | Mapping[str, int],
+    output_name: str = "vec",
+    scalar_type: type[T] = Real,
+) -> NumberT | T | Vector | tuple[NumberT | T | Vector, ...]:
+    """Vectorize expression by replacing real values
     by an array at a given indices.
 
     Parameters
     ----------
     expr
-    symbol_names
-        if a tuple, provides the names of the symbols
+    input_names
+        if a tuple, provides the names of the values
         which will be mapped to the indices given by their position.
         if a dict, maps symbol names to indices.
-    varname
+    output_name
         name of the array value
     """
+
+    # It would be nice that NumberT is actually the PT of Value.
     if isinstance(expr, NumberT):
         return expr
 
-    if not isinstance(expr, (Symbol, Real, Vector)):
-        return tuple(vectorize(symbol, symbol_names, varname) for symbol in expr)
+    if not isinstance(expr, scalar_type):
+        # Then is an iterable, vectorize each element.
+        expr = cast(Iterable[NumberT | T], expr)
+        return tuple(
+            vectorize(symbol, input_names, output_name, scalar_type) for symbol in expr
+        )
 
-    if isinstance(symbol_names, dict):
-        it = zip(symbol_names.values(), symbol_names.keys())
+    if isinstance(input_names, dict):
+        it = zip(input_names.values(), input_names.keys())
     else:
-        it = enumerate(symbol_names)
+        it = enumerate(input_names)
 
-    arr = Vector(varname)
+    arr = Vector(output_name)
 
     reps = {scalar_type(name): arr[ndx] for ndx, name in it}
     from ..ops import substitute
@@ -209,7 +215,7 @@ def vectorize(
 @overload
 def auto_vectorize(
     expr: NumberT,
-    varname: str = "vec",
+    output_name: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], Real]: ...
 
@@ -217,7 +223,7 @@ def auto_vectorize(
 @overload
 def auto_vectorize(
     expr: Real,
-    varname: str = "vec",
+    output_name: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], Real]: ...
 
@@ -225,27 +231,27 @@ def auto_vectorize(
 @overload
 def auto_vectorize(
     expr: Iterable[Real],
-    varname: str = "vec",
+    output_name: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[tuple[str, ...], tuple[Real, ...]]: ...
 
 
 def auto_vectorize(
     expr: NumberT | Real | Iterable[Real],
-    varname: str = "vec",
+    output_name: str = "vec",
     scalar_type: type[Real] = Real,
 ) -> tuple[
     tuple[str, ...],
     NumberT | Real | tuple[NumberT | Real, ...],
 ]:
-    """Vectorize expression by replacing all test_scalar symbols
+    """Vectorize expression by replacing all test_scalar values
     by an array at a given indices. Symbols are ordered into
     the array alphabetically.
 
     Parameters
     ----------
     expr
-    varname
+    output_name
         name of the array value
 
     Returns
@@ -256,7 +262,7 @@ def auto_vectorize(
         vectorized expression.
 
     """
-    from ..ops.base import symbol_names as _symbol_names
+    from ..ops.base import value_names as _symbol_names
 
     if isinstance(expr, NumberT):
         return tuple(), expr
@@ -267,7 +273,7 @@ def auto_vectorize(
         for symbol in expr:
             out.update(_symbol_names(symbol, ""))
         symbol_names = tuple(sorted(out))
-        return symbol_names, vectorize(expr, symbol_names, varname, scalar_type)
+        return symbol_names, vectorize(expr, symbol_names, output_name, scalar_type)
     else:
         symbol_names = tuple(sorted(_symbol_names(expr, "")))
-        return symbol_names, vectorize(expr, symbol_names, varname, scalar_type)
+        return symbol_names, vectorize(expr, symbol_names, output_name, scalar_type)

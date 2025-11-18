@@ -7,7 +7,7 @@ from symbolite import Symbol, real, vector
 from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations
 from symbolite.ops import as_code, substitute, translate
-from symbolite.ops.base import evaluate, symbol_names
+from symbolite.ops.base import evaluate, value_names
 
 all_impl = get_all_implementations()
 
@@ -39,13 +39,13 @@ def test_vector():
 def test_methods():
     assert substitute(vec, {vec: (1, 2, 3)}) == (1, 2, 3)
     assert evaluate(substitute(vec[1], {vec: (1, 2, 3)})) == 2
-    assert symbol_names(vec) == {
+    assert value_names(vec) == {
         "vec",
     }
-    assert symbol_names(vec[1]) == {
+    assert value_names(vec[1]) == {
         "vec",
     }
-    assert symbol_names(vec[1] + vec[0]) == {
+    assert value_names(vec[1] + vec[0]) == {
         "vec",
     }
 
@@ -123,7 +123,7 @@ def test_vectorize(expr: real.Real, params: Any, result: real.Real):
 
 
 def test_vectorize_non_default_varname():
-    assert vector.vectorize(x + 2 * y, ("x", "y"), varname="v") == v[0] + 2 * v[1]
+    assert vector.vectorize(x + 2 * y, ("x", "y"), output_name="v") == v[0] + 2 * v[1]
 
 
 def test_vectorize_many():
