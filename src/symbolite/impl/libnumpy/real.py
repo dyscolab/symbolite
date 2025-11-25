@@ -14,7 +14,7 @@ from __future__ import annotations
 import operator as op
 from typing import Any
 
-import jax.numpy as np
+import numpy as np
 
 from symbolite.core import Unsupported
 
