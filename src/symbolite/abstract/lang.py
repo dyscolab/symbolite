@@ -20,17 +20,17 @@ from ..core.symbolite_object import (
 from ..core.value import Value
 from ..ops.base import free_values
 
-to_bool = ValueConverter[bool]
+to_bool = ValueConverter[bool]()
 
-to_int = ValueConverter[int]
+to_int = ValueConverter[int]()
 
-to_float = ValueConverter[float]
+to_float = ValueConverter[float]()
 
-to_tuple = ValueConverter[tuple[Any, ...]]
+to_tuple = ValueConverter[tuple[Any, ...]]()
 
-to_list = ValueConverter[list[Any]]
+to_list = ValueConverter[list[Any]]()
 
-to_dict = ValueConverter[tuple[tuple[Any, Any], ...]]
+to_dict = ValueConverter[tuple[tuple[Any, Any], ...]]()
 
 
 def _validate_block_dependencies(info: BlockInfo) -> None:
