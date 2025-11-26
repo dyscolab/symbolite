@@ -76,10 +76,12 @@ def to_float(value: float, libsl: Any) -> str:
 
 
 def to_tuple(value: tuple[Any, ...], libsl: Any) -> str:
+    value = (str(v) for v in value)
     return f"({', '.join(value)}, )"
 
 
 def to_list(value: tuple[Any, ...], libsl: Any) -> str:
+    value = (str(v) for v in value)
     return f"[{', '.join(value)}]"
 
 

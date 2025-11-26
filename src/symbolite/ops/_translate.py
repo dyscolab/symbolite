@@ -20,7 +20,7 @@ from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name, Value
-from ._get_name import get_name
+from ._get_name import get_name, get_namespace
 
 
 @singledispatch
@@ -73,12 +73,6 @@ def translate_dict(obj: dict[Any, Any], libsl: types.ModuleType) -> Any:
     )
 
 
-@translate.register
-def translate_str(obj: str, libsl: types.ModuleType) -> Any:  # | Unsupported:
-    # TODO: Remove?
-    return attrgetter(obj)(libsl)
-
-
 @translate.register(SymboliteObject)
 def translate_symbolite_object(
     obj: SymboliteObject[Any], libsl: types.ModuleType
@@ -91,28 +85,29 @@ def translate_symbolite_object(
 def translate_value(obj: Value[Any], libsl: types.ModuleType) -> Any:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
+        # Literal value or Call
         return translate(info.value, libsl)
 
-    symbol_name, namespace = info.value.name, info.value.namespace
+    namespace = get_namespace(info)
+    if namespace is None or namespace == "":
+        # User defined symbol
+        # Try to map the class
+        cls_name = f"{obj.__class__.__module__.split('.')[-1]}.{obj.__class__.__name__}"
 
-    if namespace:
-        name = get_name(obj, qualified=True)
-        value = translate(name, libsl)
+        cls = attrgetter(cls_name)(libsl)
+        if cls is Unsupported:
+            raise Unsupported(f"{cls_name} is not supported in module {libsl.__name__}")
+
+        return cls(get_name(obj, qualified=False))
+    else:
+        # Library symbol
+        qname = get_name(obj, qualified=True)
+        value = attrgetter(qname)(libsl)
 
         if value is Unsupported:
-            raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
+            raise Unsupported(f"{qname} is not supported in module {libsl.__name__}")
 
         return value
-
-    # User defined symbol, try to map the class
-    name = f"{obj.__class__.__module__.split('.')[-1]}.{obj.__class__.__name__}"
-    f = translate(name, libsl)
-
-    if f is Unsupported:
-        raise Unsupported(f"{name} is not supported in module {libsl.__name__}")
-
-    return f(symbol_name)
-
 
 @translate.register(FunctionInfo)
 def translate_function_info(
