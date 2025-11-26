@@ -61,14 +61,14 @@ def translate_assign_info(obj: AssignInfo, libsl: types.ModuleType) -> Any:
     return translate_assign(obj, libsl=libsl)
 
 
-def _return(value: Any, libsl: Any):
+def _noop(value: Any, libsl: Any):
     return value
 
 
-to_bool = _return
-to_int = _return
-to_float = _return
-to_tuple = _return
+to_bool = _noop
+to_int = _noop
+to_float = _noop
+to_tuple = _noop
 
 
 def to_list(value: tuple[Any, ...], libsl: Any) -> list[Any]:
