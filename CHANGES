@@ -1,10 +1,18 @@
 Symbolite Changelog
 ===================
 
-0.8.0 (unreleased)
+0.8.0 (2025-11-28)
 ------------------
 
-- Nothing changed yet.
+- Drop legacy `.subs`, `.subs_by_name`, `.eval`, `.symbol_names`, `.yield_named` and `.symbol_namespaces` in favor of the new substitution/translation APIs (breaking change).
+- Reorganize the symbolic core around `SymbolicObject`, `Call`, and separated Function/Operator types; rename `evaluate` to `translate` and clarify naming helpers.
+- Introduce the `lang` module and `libpythoncode` backend so `as_code` is generated through translation with VALUE/CODE kinds.
+- Rename `Scalar` to `Real`, remove `Real`/`Vector` as `Symbol` subclasses, and push more operations into singledispatch `ops`.
+- Make symbolic objects opaque, keeping metadata in `__symbolite_info__`.
+- Add `SymbolicNamespace` capabilities (yielding, substitute/evaluate, string rendering) and rework `yield_free_symbols`/function helpers.
+- Modernize packaging: require Python 3.12, drop 3.10/3.11, migrate to the new pixi layout, refresh CI, and add win-64 builds.
+- Remove JAX dependencies from numpy/win paths; fix power handling (including Pint) and value conversion edge cases.
+- Improve docs, naming consistency, and typing coverage.
 
 
 0.7.0 (2025-01-27)
