@@ -16,7 +16,7 @@ from .value import Value
 
 class ValueConverter[T]:
     def __call__(self, value: T, libsl: types.ModuleType) -> Any:
-        pass
+        return value
 
 
 class AssignInfo(NamedTuple):
