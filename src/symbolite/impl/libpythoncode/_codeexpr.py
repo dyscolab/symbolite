@@ -16,7 +16,7 @@ from typing import Any, Iterable
 from symbolite.core.function import Function, Operator
 from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.core.value import Name, Value
-from symbolite.ops._get_name import get_name
+from symbolite.ops._get_name import get_full_name
 
 
 @dataclass(frozen=True)
@@ -98,7 +98,7 @@ def make_attribute(name: str) -> CodeExpr:
 
 
 def as_function(obj: Function[Any]) -> Any:
-    qualified_name = get_name(obj, qualified=True)
+    qualified_name = get_full_name(obj)
     return make_function(qualified_name)
 
 
@@ -111,5 +111,5 @@ def as_named_value(obj: Value[Any]) -> CodeExpr:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
         raise ValueError(f"Value {obj!r} is not bound to a Name.")
-    qualified_name = get_name(obj, qualified=True)
+    qualified_name = get_full_name(obj)
     return make_attribute(qualified_name)

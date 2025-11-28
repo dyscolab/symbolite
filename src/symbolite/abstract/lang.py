@@ -18,6 +18,7 @@ from ..core.symbolite_object import (
     set_symbolite_info,
 )
 from ..core.value import Value
+from ..ops._get_name import get_full_name
 from ..ops.base import free_values
 
 to_bool = ValueConverter[bool]()
@@ -34,20 +35,20 @@ to_dict = ValueConverter[tuple[tuple[Any, Any], ...]]()
 
 
 def _validate_block_dependencies(info: BlockInfo) -> None:
-    defined = {get_name(var) for var in info.inputs}
+    defined = {get_full_name(var) for var in info.inputs}
 
     for line_number, ainfo in enumerate(info.lines, start=1):
         for var in free_values(ainfo.rhs):
-            name = get_name(var)
+            name = get_full_name(var)
             if name not in defined:
                 raise ValueError(
                     f"Block line {line_number}: value '{name}' must be provided as an input or defined in a previous line."
                 )
 
-        defined.add(get_name(ainfo.lhs))
+        defined.add(get_full_name(ainfo.lhs))
 
     for output in info.outputs:
-        name = get_name(output)
+        name = get_full_name(output)
         if name not in defined:
             raise ValueError(
                 f"Block output value '{name}' must be provided as an input or defined in the block body."

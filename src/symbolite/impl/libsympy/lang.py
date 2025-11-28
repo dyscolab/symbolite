@@ -29,21 +29,15 @@ from ...ops import get_name, translate
 
 def Assign(info: AssignInfo, libsl: types.ModuleType) -> Assignment:
     """Translate an AssignInfo into a Python assignment statement."""
-    return Assignment(
-        Symbol(get_name(info.lhs, qualified=False)), translate(info.rhs, libsl)
-    )
+    return Assignment(Symbol(get_name(info.lhs)), translate(info.rhs, libsl))
 
 
 def Block(info: BlockInfo, libsl: types.ModuleType):
     """Translate a BlockInfo into a Python function definition."""
 
-    parameters = tuple(
-        Symbol(get_name(var, qualified=False), real=True) for var in info.inputs
-    )
+    parameters = tuple(Symbol(get_name(var), real=True) for var in info.inputs)
 
-    outputs = tuple(
-        Symbol(get_name(var, qualified=False), real=True) for var in info.outputs
-    )
+    outputs = tuple(Symbol(get_name(var), real=True) for var in info.outputs)
 
     if len(outputs) == 0:
         ret = Return()

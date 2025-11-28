@@ -17,7 +17,7 @@ from typing import Any, Callable
 
 from ..core.symbolite_object import get_symbolite_info
 from ..core.value import Name, Value
-from ._get_name import get_name, get_namespace
+from ._get_name import get_full_name, get_namespace
 
 
 def count_named(obj: Any) -> dict[Any, int]:
@@ -105,8 +105,8 @@ def value_names(self: Any, namespace: str | None = "") -> set[str]:
     from . import yield_named
 
     if namespace is None:
-        return set(map(get_name, yield_named(self)))
+        return set(map(get_full_name, yield_named(self)))
     else:
         return set(
-            map(get_name, filter(compare_namespace(namespace), yield_named(self)))
+            map(get_full_name, filter(compare_namespace(namespace), yield_named(self)))
         )

@@ -20,7 +20,7 @@ from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name, Value
-from ._get_name import get_name, get_namespace
+from ._get_name import get_full_name, get_name, get_namespace
 
 
 @singledispatch
@@ -98,16 +98,17 @@ def translate_value(obj: Value[Any], libsl: types.ModuleType) -> Any:
         if cls is Unsupported:
             raise Unsupported(f"{cls_name} is not supported in module {libsl.__name__}")
 
-        return cls(get_name(obj, qualified=False))
+        return cls(get_name(obj))
     else:
         # Library symbol
-        qname = get_name(obj, qualified=True)
+        qname = get_full_name(obj)
         value = attrgetter(qname)(libsl)
 
         if value is Unsupported:
             raise Unsupported(f"{qname} is not supported in module {libsl.__name__}")
 
         return value
+
 
 @translate.register(FunctionInfo)
 def translate_function_info(

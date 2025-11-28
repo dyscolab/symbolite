@@ -17,7 +17,7 @@ from typing_extensions import type_repr
 import symbolite.impl.libpythoncode as libpythoncode
 
 from ...abstract.lang import AssignInfo, BlockInfo
-from ...ops._get_name import get_name
+from ...ops._get_name import get_full_name, get_name
 from ...ops._translate import translate
 
 
@@ -25,13 +25,13 @@ def Block(info: BlockInfo, **_: Any) -> str:
     """Translate a BlockInfo into a Python function definition."""
 
     parameters = tuple(
-        f"{get_name(var, qualified=False)}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
+        f"{get_name(var)}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
         for var in info.inputs
     )
     body = [translate(assign, libpythoncode) for assign in info.lines]
 
     ret = {
-        f"{get_name(var)}": f"{type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
+        f"{get_full_name(var)}": f"{type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
         for var in info.outputs
     }
 
@@ -45,7 +45,7 @@ def Block(info: BlockInfo, **_: Any) -> str:
             return_vars = ", ".join(ret.keys())
             return_ann = "tuple[" + ", ".join(ret.values()) + "]"
 
-    header = f"def {get_name(info, qualified=False)}({', '.join(parameters)}) -> {return_ann}"
+    header = f"def {get_name(info)}({', '.join(parameters)}) -> {return_ann}"
 
     parts = [f"{header}:"]
     if body:
@@ -58,7 +58,7 @@ def Block(info: BlockInfo, **_: Any) -> str:
 def Assign(info: AssignInfo, **_: Any) -> str:
     """Translate an AssignInfo into a Python assignment statement."""
 
-    lhs = get_name(info.lhs, qualified=False)
+    lhs = get_name(info.lhs)
     rhs = translate(info.rhs, libpythoncode)
     return f"{lhs} = {rhs}"
 

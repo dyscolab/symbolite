@@ -18,7 +18,7 @@ from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name
-from ..ops._get_name import get_name
+from ..ops._get_name import get_full_name
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
@@ -115,7 +115,7 @@ def tree_view_value(obj: Value[Any], pretty_printer: Printer | None = None):
     pretty_printer = pretty_printer or _default_printer()
     info = get_symbolite_info(obj)
     if isinstance(info.value, Name):
-        pretty_printer.append(get_name(info.value, qualified=True))
+        pretty_printer.append(get_full_name(info.value))
     else:
         pretty_printer.append(f"{obj.__class__.__name__}#")
         tree_view(info.value, pretty_printer)

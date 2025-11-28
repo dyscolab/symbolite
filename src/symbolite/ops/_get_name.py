@@ -17,49 +17,80 @@ from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name, ValueInfo
 
+#################
+# get_full_name
+#################
+
 
 @singledispatch
-def get_name(obj: Name, qualified: bool = True) -> str:
-    if obj.namespace and qualified:
+def get_full_name(obj: Name) -> str:
+    if obj.namespace:
         return f"{obj.namespace}.{obj.name}"
     return obj.name
 
 
-@get_name.register(SymboliteObject)
-def get_name_symbolite_object(obj: SymboliteObject[Any], qualified: bool = True) -> str:
+@get_full_name.register(ValueInfo)
+def get_full_name_value(obj: ValueInfo[Any]) -> str:
+    if isinstance(obj.value, Name):
+        return get_full_name(obj.value)
+    else:
+        return "<anonymous>"
+
+
+@get_full_name.register(SymboliteObject)
+def get_full_name_symbolite_object(obj: SymboliteObject[Any]) -> str:
     info = get_symbolite_info(obj)
-    return get_name(info, qualified=qualified)
+    return get_full_name(info)
+
+
+#################
+# get_name
+#################
+
+
+@singledispatch
+def get_name(obj: Name) -> str:
+    return obj.name
+
+
+@get_name.register(SymboliteObject)
+def get_name_symbolite_object(obj: SymboliteObject[Any]) -> str:
+    info = get_symbolite_info(obj)
+    return get_name(info)
 
 
 @get_name.register(ValueInfo)
-def get_name_value(obj: ValueInfo[Any], qualified: bool = True) -> str:
+def get_name_value(obj: ValueInfo[Any]) -> str:
     if isinstance(obj.value, Name):
-        return get_name(obj.value, qualified=qualified)
+        return get_name(obj.value)
     else:
         return "<anonymous>"
 
 
 @get_name.register(FunctionInfo)
-def get_name_function(obj: FunctionInfo[Any], qualified: bool = True) -> str:
-    if obj.namespace and qualified:
+def get_name_function(obj: FunctionInfo[Any]) -> str:
+    if obj.namespace:
         return f"{obj.namespace}.{obj.name}"
     return obj.name
 
 
 @get_name.register(OperatorInfo)
-def get_name_operator(obj: OperatorInfo[Any], qualified: bool = True) -> str:
-    if obj.namespace and qualified:
+def get_name_operator(obj: OperatorInfo[Any]) -> str:
+    if obj.namespace:
         return f"{obj.namespace}.{obj.name}"
     return obj.name
 
 
 @get_name.register(UserFunctionInfo)
-def get_name_user_function_info(
-    obj: UserFunctionInfo[Any, Any, Any], qualified: bool = True
-) -> str:
-    if obj.namespace and qualified:
+def get_name_user_function_info(obj: UserFunctionInfo[Any, Any, Any]) -> str:
+    if obj.namespace:
         return f"{obj.namespace}.{obj.name}"
     return obj.name
+
+
+#################
+# get_namespace
+#################
 
 
 @singledispatch
