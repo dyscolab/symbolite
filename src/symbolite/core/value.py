@@ -20,6 +20,8 @@ from .symbolite_object import (
     set_symbolite_info,
 )
 
+PREFIX = "__symbolite_value_"
+
 
 def id_generator(size: int = 6, chars: str = string.ascii_uppercase + string.digits):
     return "".join(random.choice(chars) for _ in range(size))
@@ -44,7 +46,7 @@ class Value[PT](SymboliteObject[ValueInfo[PT]]):
     def __init__(self, name_or_value: Call | Name | PT | str = "") -> None:
         if isinstance(name_or_value, str):
             if not name_or_value:
-                name_or_value = Name("__symbolite_var_" + id_generator(), "")
+                name_or_value = Name(PREFIX + id_generator(), "")
             else:
                 parts = name_or_value.split(".")
                 if len(parts) == 1:
@@ -69,7 +71,7 @@ def set_name_value(obj: Value[Any], owner: Any, name: str):
         if value.namespace != "":
             return
 
-        if not current_name.startswith("__symbolite_var_") and current_name != name:
+        if not current_name.startswith(PREFIX) and current_name != name:
             import warnings
 
             warnings.warn(
