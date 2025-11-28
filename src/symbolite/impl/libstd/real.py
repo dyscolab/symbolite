@@ -123,7 +123,8 @@ log2 = math.log2
 modf = math.modf
 nextafter = math.nextafter
 log2 = math.log2
-pow = math.pow
+# This breaks pint
+# pow = math.pow
 radians = math.radians
 remainder = math.remainder
 sin = math.sin
