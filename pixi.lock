@@ -5862,8 +5862,8 @@ packages:
   timestamp: 1733569565672
 - pypi: ./
   name: symbolite
-  version: 0.7.1.dev48+g8850efa3b.d20251128
-  sha256: f89cb14fccd0bb02001365d37109979256039d4431ec3e15aef0501890ed706a
+  version: 0.8.1.dev1+g3fc043b09.d20251129
+  sha256: fac3d1b27c453405075d159ed304b6475f626a622af165c048cc034f947b093d
   requires_python: '>=3.12'
   editable: true
 - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
