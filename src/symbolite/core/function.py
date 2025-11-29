@@ -11,7 +11,8 @@ Symbolic functions.
 from __future__ import annotations
 
 import types
-from typing import Any, Callable, Literal, NamedTuple, Protocol, Self, cast
+from collections.abc import Callable
+from typing import Any, Literal, NamedTuple, Protocol, Self, cast
 
 from .call import Call
 from .symbolite_object import SymboliteObject, get_symbolite_info, set_symbolite_info

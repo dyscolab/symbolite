@@ -13,7 +13,8 @@ from __future__ import annotations
 import collections
 import types
 import warnings
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from ..core.symbolite_object import get_symbolite_info
 from ..core.value import Name, Value

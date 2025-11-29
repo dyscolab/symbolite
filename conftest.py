@@ -20,7 +20,7 @@ def setup_test_readme():
             output.append("\n")
             if mode is None and line.strip() == "```python":
                 mode = "first_line"
-                output[i] = INDENT + "# line %04d" % i
+                output[i] = f"{INDENT}# line {i:04d}"
                 # output[i] = 'def test_line_%04d():\n' % i
                 continue
             elif line.strip() == "```":

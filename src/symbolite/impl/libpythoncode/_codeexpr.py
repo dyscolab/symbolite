@@ -10,8 +10,9 @@ Utilities to build Python source snippets from Symbolite expressions.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from symbolite.core.function import Function, Operator
 from symbolite.core.symbolite_object import get_symbolite_info
