@@ -10,8 +10,7 @@ Code-emitting counterparts for ``symbolite.abstract.real``.
 
 from __future__ import annotations
 
-from symbolite.abstract import real as abstract_real
-
+from ...abstract import real as abstract_real
 from ._codeexpr import (
     CodeExpr,
     as_function,

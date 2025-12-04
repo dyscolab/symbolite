@@ -10,8 +10,7 @@ Code-emitting counterparts for ``symbolite.abstract.vector``.
 
 from __future__ import annotations
 
-from symbolite.abstract import vector as abstract_vector
-
+from ...abstract import vector as abstract_vector
 from ._codeexpr import CodeExpr, as_function, as_operator
 
 eq = as_operator(abstract_vector.eq)

@@ -18,7 +18,7 @@ import sympy
 import sympy as sy
 from sympy.abc import x, y
 
-from symbolite.core import Unsupported
+from ...core import Unsupported
 
 # Comparison methods (not operator)
 eq = op.eq

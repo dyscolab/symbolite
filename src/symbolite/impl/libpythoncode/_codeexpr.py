@@ -14,10 +14,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
 
-from symbolite.core.function import Function, Operator
-from symbolite.core.symbolite_object import get_symbolite_info
-from symbolite.core.value import Name, Value
-from symbolite.ops._get_name import get_full_name
+from ...core.function import Function, Operator
+from ...core.symbolite_object import get_symbolite_info
+from ...core.value import Name, Value
+from ...ops._get_name import get_full_name
 
 
 @dataclass(frozen=True)

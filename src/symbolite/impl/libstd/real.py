@@ -15,7 +15,7 @@ import math
 import operator as op
 from typing import Any
 
-from symbolite.core import Unsupported
+from ...core import Unsupported
 
 _pow = pow
 

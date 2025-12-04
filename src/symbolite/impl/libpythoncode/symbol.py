@@ -10,8 +10,7 @@ Code-emitting counterparts for ``symbolite.abstract.symbol``.
 
 from __future__ import annotations
 
-from symbolite.abstract import symbol as abstract_symbol
-
+from ...abstract import symbol as abstract_symbol
 from ._codeexpr import CodeExpr, as_function, as_operator
 
 eq = as_operator(abstract_symbol.eq)

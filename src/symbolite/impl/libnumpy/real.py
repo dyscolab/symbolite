@@ -16,7 +16,7 @@ from typing import Any
 
 import numpy as np
 
-from symbolite.core import Unsupported
+from ...core import Unsupported
 
 # Comparison methods (not operator)
 eq = op.eq

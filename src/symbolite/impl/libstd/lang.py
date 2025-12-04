@@ -12,11 +12,10 @@ from __future__ import annotations
 
 from typing import Any
 
-import symbolite.impl.libpythoncode as libpythoncode
-
 from ...abstract.lang import Assign as _Assign
 from ...abstract.lang import Block as _Block
 from ...core.symbolite_object import get_symbolite_info
+from ...impl import libpythoncode
 from ...ops._get_name import get_name
 from ...ops._translate import translate
 from .._lang_value_utils import compile as compile_code
