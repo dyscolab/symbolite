@@ -43,7 +43,7 @@ jobs:
         with:
           environments: build
       - name: Build the package
-        run: pixi run --environment build build
+        run: pixi run --environment build _build
       - name: Publish to PyPI
-        run: pixi run --environment build publish
+        run: pixi run --environment build _publish
         if: github.ref_type == 'tag'
