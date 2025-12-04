@@ -14,21 +14,24 @@ from typing import Any
 
 from typing_extensions import type_repr
 
-import symbolite.impl.libpythoncode as libpythoncode
-
-from ...abstract.lang import AssignInfo, BlockInfo
+from ...abstract.lang import Assign as _Assign
+from ...abstract.lang import Block as _Block
+from ...core.symbolite_object import get_symbolite_info
 from ...ops._get_name import get_full_name, get_name
 from ...ops._translate import translate
 
 
-def Block(info: BlockInfo, **_: Any) -> str:
+def Block(obj: _Block, libsl: Any) -> str:
     """Translate a BlockInfo into a Python function definition."""
+
+    info = get_symbolite_info(obj)
 
     parameters = tuple(
         f"{get_name(var)}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
         for var in info.inputs
     )
-    body = [translate(assign, libpythoncode) for assign in info.lines]
+
+    body = [translate(assign, libsl) for assign in info.lines]
 
     ret = {
         f"{get_full_name(var)}": f"{type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
@@ -55,12 +58,14 @@ def Block(info: BlockInfo, **_: Any) -> str:
     return "\n".join(parts)
 
 
-def Assign(info: AssignInfo, **_: Any) -> str:
+def Assign(obj: _Assign, libsl: Any) -> str:
     """Translate an AssignInfo into a Python assignment statement."""
 
-    lhs = get_name(info.lhs)
-    rhs = translate(info.rhs, libpythoncode)
-    return f"{lhs} = {rhs}"
+    info = get_symbolite_info(obj)
+
+    lhs = translate(info.lhs, libsl)
+    rhs = translate(info.rhs, libsl)
+    return f"{str(lhs)} = {str(rhs)}"
 
 
 def to_bool(value: bool, libsl: Any) -> str:
@@ -77,12 +82,12 @@ def to_float(value: float, libsl: Any) -> str:
 
 def to_tuple(value: tuple[Any, ...], libsl: Any) -> str:
     value = (translate(v, libsl) for v in value)
-    return f"({', '.join(value)}, )"
+    return f"({', '.join(map(str, value))}, )"
 
 
 def to_list(value: tuple[Any, ...], libsl: Any) -> str:
     value = (translate(v, libsl) for v in value)
-    return f"[{', '.join(value)}]"
+    return f"[{', '.join(map(str, value))}]"
 
 
 def to_dict(value: tuple[tuple[Any, Any], ...], libsl: Any) -> str:

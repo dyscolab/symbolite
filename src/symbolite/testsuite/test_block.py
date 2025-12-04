@@ -2,11 +2,20 @@ import math
 
 import pytest
 
-from symbolite import real
+from symbolite import real, vector
 from symbolite.abstract.lang import Assign, Block
 from symbolite.core.symbolite_object import get_symbolite_info
 from symbolite.impl import libpythoncode, libstd
 from symbolite.ops import translate
+from symbolite.ops._substitute import substitute
+
+
+def _make_assign() -> tuple[str, str]:
+    x = real.Real("x")
+    y = real.Real("y")
+    total = real.Real("total")
+
+    return Assign(total, x + y), "total = x + y"
 
 
 def _make_sample_block() -> tuple[Block, str]:
@@ -32,6 +41,15 @@ def _make_sample_block() -> tuple[Block, str]:
     )
 
     return block, expected_definition
+
+
+def test_assign():
+    assign, expected_definition = _make_assign()
+
+    code = translate(assign, libpythoncode)
+
+    assert isinstance(code, str)
+    assert code == expected_definition
 
 
 def test_block_translate_to_code_definition():
@@ -118,9 +136,8 @@ def test_block_assign_translation_uses_backend():
 
     original_assign = module.lang.Assign
 
-    def custom_assign(assign, rhs_code=None, **kwargs):
-        assert kwargs.get("libsl") is module
-        rendered = original_assign(assign, rhs_code=rhs_code, **kwargs)
+    def custom_assign(assign, libsl):
+        rendered = original_assign(assign, libsl)
         return f"{rendered}  # custom"
 
     module.lang.Assign = custom_assign  # type: ignore[attr-defined]
@@ -149,3 +166,32 @@ def test_assign_translation_to_code():
     rendered = translate(assignment, libpythoncode)
     assert isinstance(rendered, str)
     assert rendered.startswith("x = ")
+
+
+def test_subs_block():
+    x = real.Real("x")
+    y = real.Real("y")
+    suma = real.Real("suma")
+    resta = real.Real("resta")
+
+    entrada = vector.Vector("entrada")
+    salida = vector.Vector("salida")
+
+    b = Block(
+        inputs=(x, y),
+        outputs=(suma, resta),
+        lines=(Assign(suma, x + y), Assign(resta, x - y)),
+        name="myfun",
+    )
+
+    bv = substitute(
+        b, {x: entrada[0], y: entrada[1], suma: salida[0], resta: salida[1]}
+    )
+    info = get_symbolite_info(bv)
+    assert info.inputs == (entrada, salida)
+    assert info.lines == (
+        Assign(salida[0], entrada[0] + entrada[1]),
+        Assign(salida[1], entrada[0] - entrada[1]),
+    )
+    assert info.outputs == (salida,)
+    assert info.name == "myfun"

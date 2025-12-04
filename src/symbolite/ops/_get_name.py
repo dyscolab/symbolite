@@ -14,6 +14,7 @@ from functools import singledispatch
 from typing import Any
 
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
+from ..core.lang import BlockInfo
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name, ValueInfo
 
@@ -86,6 +87,11 @@ def get_name_user_function_info(obj: UserFunctionInfo[Any, Any, Any]) -> str:
     if obj.namespace:
         return f"{obj.namespace}.{obj.name}"
     return obj.name
+
+
+@get_name.register
+def get_name_block_info(obj: BlockInfo) -> str:
+    return obj.name or "__symbolite_block"
 
 
 #################

@@ -18,6 +18,7 @@ from ..core import (
 )
 from ..core.call import CallInfo
 from ..core.function import FunctionInfo, OperatorInfo, UserFunctionInfo
+from ..core.lang import Assign, Block
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name, Value
 from ._get_name import get_full_name, get_name, get_namespace
@@ -71,6 +72,16 @@ def translate_dict(obj: dict[Any, Any], libsl: types.ModuleType) -> Any:
         ),
         libsl,
     )
+
+
+@translate.register
+def translate_assign(obj: Assign, libsl: types.ModuleType) -> Any:
+    return libsl.lang.Assign(obj, libsl)
+
+
+@translate.register
+def translate_block(obj: Block, libsl: types.ModuleType) -> Any:
+    return libsl.lang.Block(obj, libsl)
 
 
 @translate.register(SymboliteObject)
