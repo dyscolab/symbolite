@@ -66,8 +66,11 @@ test-py314 = ["test", "py314"]
 [tool.pixi.dependencies]
 symbolite = { path = "." }
 
-[tool.pixi.feature.dev.dependencies]
-jupyter = "*"
+[tool.pixi.feature]
+py312.dependencies = { python = "3.12.*" }
+py313.dependencies = { python = "3.13.*" }
+py314.dependencies = { python = "3.14.*" }
+dev.dependencies = { jupyter = "*" }
 
 [tool.pixi.feature.backends.dependencies]
 numpy = "*"
@@ -101,12 +104,3 @@ pytest-mypy-testing = "*"
 
 [tool.pixi.feature.test.tasks]
 test = "pytest --doctest-modules"
-
-[tool.pixi.feature.py312.dependencies]
-python = "3.12.*"
-
-[tool.pixi.feature.py313.dependencies]
-python = "3.13.*"
-
-[tool.pixi.feature.py314.dependencies]
-python = "3.14.*"

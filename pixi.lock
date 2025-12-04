@@ -5876,7 +5876,7 @@ packages:
   - python *
   license: MIT
   input:
-    hash: 2180bad2c75aafe219f99ea251899fc016fafa7c4e2c88db3c2281c9280be6ae
+    hash: 3835f2a967d919e84a4d4f294168ac760a4e20b1a4de41a8abad6ef6fd6ba6c4
     globs:
     - pyproject.toml
 - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
