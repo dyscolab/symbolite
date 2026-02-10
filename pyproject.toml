@@ -1,7 +1,7 @@
 [project]
 name = "symbolite"
 description = "A minimalistic symbolic package."
-version = "0.8.0"
+version = "1.0.0"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
@@ -53,7 +53,7 @@ preview = ["pixi-build"]
 backend = { name = "pixi-build-python", version = "0.4.*" }
 
 [tool.pixi.package.host-dependencies]
-uv = "*"
+uv-build = "*"
 
 [tool.pixi.environments]
 default = { features = ["test", "backends", "dev"] }

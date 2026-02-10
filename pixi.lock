@@ -5866,7 +5866,7 @@ packages:
   timestamp: 1733569565672
 - conda: .
   name: symbolite
-  version: 0.8.0
+  version: 1.0.0
   build: pyh4616a5c_0
   subdir: noarch
   variants:
@@ -5875,10 +5875,6 @@ packages:
   - python >=3.12
   - python *
   license: MIT
-  input:
-    hash: 3835f2a967d919e84a4d4f294168ac760a4e20b1a4de41a8abad6ef6fd6ba6c4
-    globs:
-    - pyproject.toml
 - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
   sha256: 60f18c60f6518254f0d28e4892e94c851cdbd650f7bd49899a6169f76cf6796b
   md5: d814547f1cbcb6f8397ca5686fee8175
