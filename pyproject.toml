@@ -21,6 +21,7 @@ classifiers = [
 ]
 keywords = ["symbolic"]
 requires-python = ">=3.12"
+dependencies = ["typing-extensions>=4.15"]
 
 [project.urls]
 homepage = "https://github.com/dyscolab/symbolite"
@@ -54,6 +55,9 @@ backend = { name = "pixi-build-python", version = "0.4.*" }
 
 [tool.pixi.package.host-dependencies]
 uv-build = "*"
+
+[tool.pixi.package.run-dependencies]
+typing_extensions = ">=4.15"
 
 [tool.pixi.environments]
 default = { features = ["test", "backends", "dev"] }
