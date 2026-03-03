@@ -60,7 +60,7 @@ uv-build = "*"
 typing_extensions = ">=4.15"
 
 [tool.pixi.environments]
-default = { features = ["test", "backends", "dev"] }
+default = { features = ["py312", "test", "backends", "dev"] }
 lint = { features = ["lint"], no-default-feature = true }
 build = { features = ["build"], no-default-feature = true }
 test-py312 = ["test", "py312"]
