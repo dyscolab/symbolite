@@ -5706,7 +5706,7 @@ packages:
   timestamp: 1733569565672
 - conda: .
   name: symbolite
-  version: 1.0.0
+  version: 1.0.1
   build: pyh4616a5c_0
   subdir: noarch
   variants:

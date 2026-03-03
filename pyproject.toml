@@ -1,7 +1,7 @@
 [project]
 name = "symbolite"
 description = "A minimalistic symbolic package."
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
