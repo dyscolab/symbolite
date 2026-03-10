@@ -263,7 +263,7 @@ e = Real("real.e")
 inf = Real("real.inf")
 pi = Real("real.pi")
 nan = Real("real.nan")
-tau = Real("rea.tau")
+tau = Real("real.tau")
 
 del (
     BinaryFunction,
