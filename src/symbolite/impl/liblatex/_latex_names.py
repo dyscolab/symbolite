@@ -17,7 +17,7 @@ latex_names = {
     abstract_real.sub: "{} - {}",
     abstract_real.mul: "{} \\cdot {}",
     abstract_real.truediv: "\\dfrac{{{}}}{{{}}}",
-    abstract_real.mod: "{} \\pmod{}",
+    abstract_real.mod: "{} \\pmod{{{}}}",
     abstract_real.lshift: "{} \\ll {}",
     abstract_real.rshift: "{} \\gg {}",
     abstract_real.and_: "{} \\land {}",

@@ -94,12 +94,12 @@ trunc = as_function(abstract_real.trunc)
 ulp = as_function(abstract_real.ulp)
 
 
-def floordiv(x, y):
-    return floor(truediv(x, y))
+def floordiv(*args):
+    return floor(truediv(args[0], args[1]))
 
 
-def isqrt(x):
-    return floor(sqrt(x))
+def isqrt(*args):
+    return floor(sqrt(args[0]))
 
 
 pow = as_operator(abstract_real.pow)

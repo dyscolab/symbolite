@@ -55,9 +55,9 @@ def _maybe_parenthesize(
     expr: LatexExpr, precedence: int, *, right: bool, parenthesize: bool
 ) -> str:
     if expr.precedence < precedence and parenthesize:
-        return f"({expr.text})"
+        return f"\\left({expr.text}\\right)"
     if right and expr.precedence == precedence and parenthesize:
-        return f"({expr.text})"
+        return f"\\left({expr.text}\\right)"
     return expr.text
 
 

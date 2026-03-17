@@ -10,11 +10,7 @@ into values and functions defined in Python  into latex.
 """
 
 from .. import Kind
-from . import real
+from . import lang, real
 
-# from . import lang, real, symbol, vector
-
-KIND = Kind.VALUE
-__all__ = ["real"]
-
-# __all__ = ["symbol", "real", "vector", "lang"]
+KIND = Kind.CODE
+__all__ = ["real", "lang"]
