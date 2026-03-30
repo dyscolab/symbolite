@@ -33,7 +33,7 @@ dependencies = {
   ruff = "*",
   mdformat = "*",
 }
-tasks = { prek = "prek run" }
+tasks = { lint = "prek run --all-files" }
 
 [feature.build]
 dependencies = { uv = "*" }
