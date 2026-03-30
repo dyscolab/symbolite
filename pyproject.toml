@@ -1,105 +1,41 @@
 [project]
 name = "symbolite"
-description = "A minimalistic symbolic package."
 version = "1.1.1"
+description = "A minimalistic symbolic package."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
 authors = [
   { name = "Hernán E. Grecco", email = "hernan.grecco@gmail.com" },
   { name = "Mauro Silberberg", email = "maurosilber@gmail.com" },
 ]
-readme = "README.md"
-license = "MIT"
+keywords = ["symbolic"]
 classifiers = [
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development :: Libraries",
 ]
-keywords = ["symbolic"]
-requires-python = ">=3.12"
 dependencies = ["typing-extensions>=4.15"]
 
 [project.urls]
+changelog = "https://github.com/dyscolab/symbolite/blob/main/CHANGES"
 homepage = "https://github.com/dyscolab/symbolite"
 issues = "https://github.com/dyscolab/symbolite/issues"
-changelog = "https://github.com/dyscolab/symbolite/blob/main/CHANGES"
 
 [build-system]
-requires = ["uv_build>=0.9,<0.10"]
+requires = ["uv_build>=0.12"]
 build-backend = "uv_build"
 
 [tool.pytest.ini_options]
 addopts = "--import-mode=importlib --doctest-modules"
-pythonpath = "."
-testpaths = ["src/symbolite/testsuite"]
 doctest_optionflags = "NUMBER"
 filterwarnings = "ignore:No libsl provided, defaulting to Python standard library."
+pythonpath = "."
+testpaths = ["src/symbolite/testsuite"]
 
 [tool.ruff.format]
 docstring-code-format = true
 
-[tool.ruff.lint]
-extend-select = ["I"]
-
-[tool.pixi.workspace]
-channels = ["https://prefix.dev/conda-forge"]
-platforms = ["linux-64", "osx-arm64", "win-64"]
-preview = ["pixi-build"]
-
-[tool.pixi.package.build]
-backend = { name = "pixi-build-python", version = "*" }
-config = { ignore-pypi-mapping = false }                # Enable automatic PyPI-to-conda mapping
-
-[tool.pixi.environments]
-default = { features = ["py312", "test", "backends", "dev"] }
-lint = { features = ["lint"], no-default-feature = true }
-build = { features = ["build"], no-default-feature = true }
-test-py312 = ["test", "py312"]
-test-py313 = ["test", "py313"]
-test-py314 = ["test", "py314"]
-
-[tool.pixi.dependencies]
-symbolite = { path = "." }
-
-[tool.pixi.feature]
-py312.dependencies = { python = "3.12.*" }
-py313.dependencies = { python = "3.13.*" }
-py314.dependencies = { python = "3.14.*" }
-dev.dependencies = { jupyter = "*" }
-
-[tool.pixi.feature.backends.dependencies]
-numpy = "*"
-sympy = "*"
-
-[tool.pixi.feature.backends.target.unix.dependencies]
-jax = "*"
-
-[tool.pixi.feature.lint.dependencies]
-pre-commit = "*"
-pre-commit-hooks = "*"
-taplo = "*"
-ruff = "*"
-mdformat = "*"
-mdformat-ruff = "*"
-
-[tool.pixi.feature.lint.tasks]
-pre-commit-install = "pre-commit install"
-lint = "pre-commit run"
-
-[tool.pixi.feature.build.dependencies]
-uv = "*"
-
-[tool.pixi.feature.build.tasks]
-_build = "uv build"
-_publish = "uv publish"
-
-[tool.pixi.feature.test.dependencies]
-pytest = "*"
-pytest-mypy-testing = "*"
-
-[tool.pixi.feature.test.tasks]
-test = "pytest --doctest-modules"
+[tool.tombi]
+toml-version = "v1.1.0"

@@ -1,0 +1,51 @@
+default_install_hook_types = ["pre-commit"]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "trailing-whitespace" },
+  { id = "check-added-large-files", args = ["--maxkb=1024"] },
+  { id = "check-case-conflict" },
+  { id = "end-of-file-fixer" },
+  { id = "fix-byte-order-marker" },
+  { id = "check-json" },
+  { id = "check-json5" },
+  { id = "check-toml" },
+  { id = "check-yaml" },
+  { id = "check-xml" },
+  { id = "mixed-line-ending", args = ["--fix=lf"] },
+  { id = "check-symlinks" },
+  { id = "check-merge-conflict", args = ["--assume-in-merge"] },
+  { id = "detect-private-key" },
+]
+
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "md-format"
+name = "Format Markdown files with mdformat"
+language = "system"
+entry = "pixi run mdformat"
+files.glob = "*.md"
+
+[[repos.hooks]]
+id = "toml-format"
+name = "Format TOML files with Tombi"
+language = "system"
+entry = "pixi run tombi format"
+files.glob = "*.toml"
+
+[[repos.hooks]]
+id = "python-format"
+name = "Format Python files with ruff"
+language = "system"
+entry = "pixi run ruff format"
+types = ["python"]
+
+[[repos.hooks]]
+id = "python-lint"
+name = "Lint Python files with ruff"
+language = "system"
+entry = "pixi run ruff check --force-exclude --fix"
+types = ["python"]
