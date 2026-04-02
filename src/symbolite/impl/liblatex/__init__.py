@@ -3,7 +3,7 @@ symbolite.impl.liblatex
 ~~~~~~~~~~~~~~~~~~~~~
 
 Translate symbolite
-into values and functions defined in Python  into latex.
+into values and functions defined in Python into latex.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
 :license: BSD, see LICENSE for more details.
