@@ -5712,9 +5712,9 @@ packages:
   variants:
     target_platform: noarch
   depends:
-  - typing_extensions >=4.15
   - python >=3.12
   - python *
+  - typing_extensions >=4.15
   license: MIT
 - conda: https://prefix.dev/conda-forge/noarch/sympy-1.14.0-pyh04b8f61_5.conda
   sha256: 60f18c60f6518254f0d28e4892e94c851cdbd650f7bd49899a6169f76cf6796b
