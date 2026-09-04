@@ -1,5 +1,11 @@
 Symbolite Changelog
 ===================
+
+
+1.1.1 (2023-9-4)
+------------------
+- Removed incompatible version 0.4.* requirement in pytproject.toml.
+
 1.1 (31-3-2026)
 ------------------
 - Added liblatex to convert expressions to Latex.
