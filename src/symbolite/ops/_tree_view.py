@@ -98,7 +98,7 @@ def tree_view_call(obj: CallInfo, pretty_printer: Printer | None = None):
     pretty_printer.indent()
 
     for ndx, (k, v) in enumerate(
-        itertools.chain(map(lambda arg: (None, arg), obj.args), obj.kwargs_items)
+        itertools.chain(((None, arg) for arg in obj.args), obj.kwargs_items)
     ):
         if k is not None:
             pretty_printer.append(f"{k} = ")

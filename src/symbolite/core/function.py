@@ -60,7 +60,7 @@ class Function[O: Value[Any]](SymboliteObject[FunctionInfo[O]]):
                 f"Invalid number of arguments ({len(args)}), expected {info.arity}."
             )
 
-        expr = Call(self, args, tuple())
+        expr = Call(self, args, ())
 
         return info.output_type(expr)
 
@@ -127,7 +127,7 @@ class Operator[O: Value[Any]](SymboliteObject[OperatorInfo[O]]):
                 f"Invalid number of arguments ({len(args)}), expected {info.arity}."
             )
 
-        expr = Call(self, args, tuple())
+        expr = Call(self, args, ())
 
         return info.output_type(expr)
 
@@ -231,6 +231,6 @@ class UserFunction[P, T, O: Value[Any]](SymboliteObject[UserFunctionInfo[P, T, O
                 f"Invalid number of arguments ({len(args)}), expected {info.arity}."
             )
 
-        expr = Call(self, args, tuple())
+        expr = Call(self, args, ())
 
         return info.output_type(expr)

@@ -24,7 +24,6 @@ def test_different_precedence(expr: Real, result: str):
 @pytest.mark.parametrize(
     "expr,result",
     [
-        (x + y + z, "x + y + z"),
         ((x + y) + z, "x + y + z"),
         (x + (y + z), "x + (y + z)"),  # Python is not associative
     ],

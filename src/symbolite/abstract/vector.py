@@ -265,7 +265,7 @@ def auto_vectorize(
     from ..ops.base import value_names as _symbol_names
 
     if isinstance(expr, NumberT):
-        return tuple(), expr
+        return (), expr
 
     if not isinstance(expr, (Symbol, Real, Vector)):
         expr = tuple(expr)

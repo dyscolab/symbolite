@@ -114,8 +114,8 @@ def test_impl_sympy():
         (x + 2 * y, ("x", "y"), vec[0] + 2 * vec[1]),
         (x + 2 * y, ("y", "x"), vec[1] + 2 * vec[0]),
         (x + 2 * real.cos(y), ("y", "x"), vec[1] + 2 * real.cos(vec[0])),
-        (x + 2 * y, dict(x=3, y=5), vec[3] + 2 * vec[5]),
-        (x + 2 * y, dict(x=5, y=3), vec[5] + 2 * vec[3]),
+        (x + 2 * y, {"x": 3, "y": 5}, vec[3] + 2 * vec[5]),
+        (x + 2 * y, {"x": 5, "y": 3}, vec[5] + 2 * vec[3]),
     ],
 )
 def test_vectorize(expr: real.Real, params: Any, result: real.Real):

@@ -150,7 +150,7 @@ def translate_call_info(obj: CallInfo, libsl: types.ModuleType) -> Any:
             ex.add_note(f"While translating {func}(*{args}, **{kwargs}): {ex}")
         except AttributeError:
             pass
-        raise ex
+        raise
 
 
 @translate.register(UserFunctionInfo)
