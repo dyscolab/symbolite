@@ -22,4 +22,4 @@ def Boolean(name: str) -> CodeExpr:
     return CodeExpr(name)
 
 
-__all__ = ["Boolean", "and_", "xor", "or_"]
+__all__ = ["Boolean", "and_", "or_", "xor"]

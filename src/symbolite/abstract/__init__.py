@@ -14,4 +14,4 @@ from .real import Real
 from .symbol import Symbol
 from .vector import Vector
 
-__all__ = ["Symbol", "Real", "Vector", "Boolean", "Block", "Assign"]
+__all__ = ["Assign", "Block", "Boolean", "Real", "Symbol", "Vector"]

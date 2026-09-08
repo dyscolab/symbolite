@@ -13,4 +13,4 @@ from .. import Kind
 from . import lang, real
 
 KIND = Kind.CODE
-__all__ = ["real", "lang"]
+__all__ = ["lang", "real"]

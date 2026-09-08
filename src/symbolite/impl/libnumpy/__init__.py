@@ -14,4 +14,4 @@ from . import lang, real, symbol, vector
 
 KIND = Kind.VALUE
 
-__all__ = ["symbol", "real", "vector", "lang"]
+__all__ = ["lang", "real", "symbol", "vector"]

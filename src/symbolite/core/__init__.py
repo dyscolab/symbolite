@@ -21,8 +21,8 @@ class Unsupported(ValueError):
 
 __all__ = [
     "Call",
-    "Value",
     "Function",
     "Operator",
     "Unsupported",
+    "Value",
 ]

@@ -21,8 +21,8 @@ from ._yield_named import yield_named
 from .base import count_named
 
 __all__ = [
-    "count_named",
     "as_code",
+    "count_named",
     "get_name",
     "get_namespace",
     "substitute",

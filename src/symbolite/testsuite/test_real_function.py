@@ -13,7 +13,7 @@ from symbolite.ops.base import free_values, value_names
 
 all_impl = get_all_implementations()
 
-x, y, z = map(real.Real, "x y z".split())
+x, y, z = map(real.Real, ["x", "y", "z"])
 
 xsy = real.Real("xsy")
 

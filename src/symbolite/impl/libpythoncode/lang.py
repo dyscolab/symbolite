@@ -65,7 +65,7 @@ def Assign(obj: _Assign, libsl: Any) -> str:
 
     lhs = translate(info.lhs, libsl)
     rhs = translate(info.rhs, libsl)
-    return f"{str(lhs)} = {str(rhs)}"
+    return f"{lhs!s} = {rhs!s}"
 
 
 def to_bool(value: bool, libsl: Any) -> str:
@@ -96,12 +96,12 @@ def to_dict(value: tuple[tuple[Any, Any], ...], libsl: Any) -> str:
 
 
 __all__ = [
-    "Block",
     "Assign",
+    "Block",
     "to_bool",
-    "to_int",
-    "to_float",
-    "to_tuple",
-    "to_list",
     "to_dict",
+    "to_float",
+    "to_int",
+    "to_list",
+    "to_tuple",
 ]

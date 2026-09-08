@@ -12,7 +12,7 @@ from symbolite.ops import substitute
 from symbolite.ops._as_code import as_code
 from symbolite.ops.base import evaluate, value_names
 
-x, y, z = map(Symbol, "x y z".split())
+x, y, z = map(Symbol, ["x", "y", "z"])
 
 F = UserFunction("F", output_type=Symbol)  # type: ignore
 G = UserFunction("G", output_type=Symbol)  # type: ignore

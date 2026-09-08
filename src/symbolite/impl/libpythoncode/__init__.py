@@ -13,4 +13,4 @@ from . import boolean, lang, real, symbol, vector
 
 KIND = Kind.CODE
 
-__all__ = ["symbol", "real", "vector", "boolean", "lang"]
+__all__ = ["boolean", "lang", "real", "symbol", "vector"]

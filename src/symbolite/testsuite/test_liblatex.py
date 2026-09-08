@@ -1,4 +1,4 @@
-from typing import Callable
+from collections.abc import Callable
 
 import pytest
 
@@ -6,7 +6,7 @@ from ..abstract import real as abstract_real
 from ..impl import liblatex
 from ..impl.liblatex._latexexpr import LatexExpr
 
-x, y, z = map(abstract_real.Real, "x y z".split())
+x, y, z = map(abstract_real.Real, ["x", "y", "z"])
 dummy_reals = (x, y, z)
 
 all_funcs = {impl: getattr(liblatex.real, impl) for impl in liblatex.real.__all__}

@@ -71,6 +71,5 @@ def rm_tree(pth):
 def pytest_sessionfinish(session, exitstatus):
     try:
         rm_tree(GENERATED_PATH)
-        pass
     except FileNotFoundError:
         pass

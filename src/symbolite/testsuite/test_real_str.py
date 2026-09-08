@@ -3,7 +3,7 @@ import pytest
 from symbolite import Real, real
 from symbolite.ops import as_code
 
-x, y, z = map(real.Real, "x y z".split())
+x, y, z = map(real.Real, ["x", "y", "z"])
 
 
 @pytest.mark.parametrize(
