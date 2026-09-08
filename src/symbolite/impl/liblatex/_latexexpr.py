@@ -133,7 +133,7 @@ def as_operator(obj: Operator[Any]) -> Any:
 def as_named_value(obj: Value[Any]) -> LatexExpr:
     info = get_symbolite_info(obj)
     if not isinstance(info.value, Name):
-        raise ValueError(f"Value {obj!r} is not bound to a Name.")
+        raise TypeError(f"Value {obj!r} is not bound to a Name.")
     latex_name = _get_latex_name(obj)
     return make_attribute(latex_name)
 

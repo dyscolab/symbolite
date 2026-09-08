@@ -85,7 +85,7 @@ invert = op.inv
 # "perm": None,  # 1 or 2
 # "log": None,  # 1 or 2 is used as log(x, e)
 
-abs = abs
+abs = abs  # noqa: PLW0127
 acos = math.acos
 acosh = math.acosh
 asin = math.asin

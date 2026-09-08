@@ -167,6 +167,6 @@ def translate_user_function_info(
     if default is not None:
         return default
 
-    raise Exception(
+    raise RuntimeError(
         f"No implementation found for {libsl.__name__} and no default implementation provided for function {obj!s}"
     )

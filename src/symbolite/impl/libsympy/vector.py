@@ -15,7 +15,7 @@ import sympy as sy
 
 getitem = operator.getitem
 
-sum = sum
+sum = sum  # noqa: PLW0127
 prod = sy.prod
 
 Vector = sy.IndexedBase

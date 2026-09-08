@@ -32,7 +32,7 @@ def compile(
     assert libsl is not None
 
     namespace: dict[str, Any] = {}
-    exec(
+    exec(  # noqa: S102
         code,
         {
             "symbol": libsl.symbol,
