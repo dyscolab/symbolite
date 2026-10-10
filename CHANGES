@@ -3,6 +3,12 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Change `vectorize` and `auto_vectorize` to return `(vector, rewritten)` and
+  create a fresh anonymous vector when `into` is omitted (breaking change).
+  Replace string-name layouts with keyword-only `order` or `indices` using
+  actual scalar symbols; respect every Mapping implementation, validate layouts,
+  and preserve supported container structure. Add `vector_inputs` to inspect
+  the deterministic automatic layout.
 - Align real-function signatures with their public mathematical contracts:
   add `VariadicFunction` for `hypot`, repair binary declarations, and preserve
   `fmod`'s dividend-sign convention in the SymPy backend.

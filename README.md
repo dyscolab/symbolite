@@ -140,8 +140,52 @@ remain Python containers. Integer-indexed assignment targets require a SymPy
 Backend discovery skips absent optional libraries, but propagates import errors
 inside installed libraries or Symbolite backends.
 
-And by the way, checkout `vectorize` and `auto_vectorize` functions
-in the vector module.
+`vector.vectorize` replaces selected scalar symbols with vector elements. It
+always returns `(vector, rewritten)`: omitting `into` creates a fresh anonymous
+`Vector()`, while supplying `into` reuses that exact vector. Use `order` for
+consecutive positions or `indices` for explicit positions from any mapping.
+
+```python
+from symbolite import Real, Vector, substitute, translate, vector
+from symbolite.impl import libstd
+
+x, y = Real("x"), Real("y")
+expr = x + 10 * y
+
+state, rewritten = vector.vectorize(expr, order=(x, y))
+assert translate(substitute(rewritten, {state: (3, 5)}), libstd) == 53
+
+state = Vector("state")
+returned, rewritten = vector.vectorize(expr, into=state, indices={x: 3, y: 5})
+assert returned is state
+assert translate(substitute(rewritten, {state: (1, 2, 0, 3, 0, 5)}), libstd) == 53
+
+inputs = vector.vector_inputs(expr)
+assert inputs == (x, y)
+state, rewritten = vector.auto_vectorize(expr)
+values = {x: 3, y: 5}
+packed = tuple(values[symbol] for symbol in inputs)
+assert translate(substitute(rewritten, {state: packed}), libstd) == 53
+```
+
+Layouts use actual named `Real` or `Symbol` objects, including subclasses, and
+leave unlisted symbols unchanged. Supply exactly one of `order` and `indices`.
+Repeated symbols in `order` are rejected; shared indices are allowed. Indices
+must be nonnegative Python integers, excluding `bool`. Expressions and supported
+containers follow `substitute`'s traversal rules, so lists remain lists.
+
+`vector_inputs(expr)` exposes the layout used by `auto_vectorize`: free scalar
+symbols without a namespace, sorted by name and deduplicated by structural
+equality. Distinct symbol types sharing a name retain their first-occurrence
+order. Backend constants such as `real.pi`, existing vectors, and Boolean leaves
+are excluded. Namespaced scalar inputs can be selected explicitly with
+`vectorize`. Constant expressions have an empty layout and still return a vector.
+
+This replaces the old positional name sequences/mappings, `output_name`, and
+`scalar_type` arguments. Migrate `vector.vectorize(expr, ("x", "y"))` to
+`state, rewritten = vector.vectorize(expr, order=(x, y))`; use
+`into=Vector("state")` to choose a name. `auto_vectorize` now returns the vector
+in its first position; use `vector_inputs` to obtain the ordered inputs.
 
 We provide a simple way to call user defined functions.
 

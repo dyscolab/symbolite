@@ -11,7 +11,7 @@ Objects and functions for vector operations.
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, cast, overload
+from typing import Any, overload
 
 from ..core import Value
 from ..core.function import (
@@ -19,6 +19,8 @@ from ..core.function import (
     UnaryFunction,
     UnaryOperator,
 )
+from ..core.symbolite_object import get_symbolite_info
+from ..core.value import Name
 from .boolean import Boolean
 from .real import NumberT, Real
 from .symbol import Symbol
@@ -142,138 +144,168 @@ prod = UnaryFunction[Vector, Real]("prod", "vector", output_type=Real)
 
 
 @overload
-def vectorize[T: Value[Any]](
-    expr: NumberT,
-    input_names: Sequence[str] | Mapping[str, int],
-    output_name: str = "vec",
-    scalar_type: type[T] = Real,
-) -> NumberT: ...
+def vectorize[K: Value[Any]](
+    expr: Real,
+    *,
+    into: Vector | None = None,
+    order: Sequence[Real | Symbol] | None = None,
+    indices: Mapping[K, int] | None = None,
+) -> tuple[Vector, Real]: ...
 
 
 @overload
-def vectorize[T: Value[Any]](
-    expr: T,
-    input_names: Sequence[str] | Mapping[str, int],
-    output_name: str = "vec",
-    scalar_type: type[T] = Real,
-) -> T: ...
+def vectorize[K: Value[Any]](
+    expr: Symbol,
+    *,
+    into: Vector | None = None,
+    order: Sequence[Real | Symbol] | None = None,
+    indices: Mapping[K, int] | None = None,
+) -> tuple[Vector, Real | Symbol]: ...
 
 
 @overload
-def vectorize[T: Value[Any]](
-    expr: Iterable[NumberT | T],
-    input_names: Sequence[str] | Mapping[str, int],
-    output_name: str = "vec",
-    scalar_type: type[T] = Real,
-) -> tuple[NumberT | T, ...]: ...
+def vectorize[N: NumberT, K: Value[Any]](
+    expr: N,
+    *,
+    into: Vector | None = None,
+    order: Sequence[Real | Symbol] | None = None,
+    indices: Mapping[K, int] | None = None,
+) -> tuple[Vector, N]: ...
 
 
-def vectorize[T: Value[Any]](
-    expr: NumberT | T | Iterable[NumberT | T],
-    input_names: Sequence[str] | Mapping[str, int],
-    output_name: str = "vec",
-    scalar_type: type[T] = Real,
-) -> NumberT | T | Vector | tuple[NumberT | T | Vector, ...]:
-    """Vectorize expression by replacing real values
-    by an array at a given indices.
+@overload
+def vectorize[K: Value[Any]](
+    expr: Any,
+    *,
+    into: Vector | None = None,
+    order: Sequence[Real | Symbol] | None = None,
+    indices: Mapping[K, int] | None = None,
+) -> tuple[Vector, Any]: ...
 
-    Parameters
-    ----------
-    expr
-    input_names
-        if a tuple, provides the names of the values
-        which will be mapped to the indices given by their position.
-        if a dict, maps symbol names to indices.
-    output_name
-        name of the array value
+
+def vectorize[K: Value[Any]](
+    expr: Any,
+    *,
+    into: Vector | None = None,
+    order: Sequence[Real | Symbol] | None = None,
+    indices: Mapping[K, int] | None = None,
+) -> tuple[Vector, Any]:
+    """Return a vector and an expression with selected scalars indexed into it.
+
+    Supply exactly one layout: ``order=(x, y)`` assigns consecutive positions
+    starting at zero; ``indices={x: 3, y: 5}`` preserves explicit positions
+    from any Mapping. Layouts contain actual named Real or Symbol values,
+    including subclasses. Unlisted values remain unchanged, and unused layout
+    entries are allowed. Repeated values in ``order`` are rejected; shared
+    positions in ``indices`` are allowed as explicit aliases.
+
+    Indices must be nonnegative Python integers, excluding bool. Bounds depend
+    on the concrete vector supplied during evaluation. ``into=None`` creates a
+    fresh anonymous Vector; otherwise the supplied Vector is returned as is.
+    The result is always ``(vector, rewritten)``, including constant inputs.
+    Expressions and supported containers follow ``substitute``'s structural
+    traversal and ownership rules; built-in lists remain lists.
     """
+    if (order is None) == (indices is None):
+        raise ValueError("Provide exactly one of order or indices.")
+    if into is not None and not isinstance(into, Vector):
+        raise TypeError("into must be a Vector or None.")
 
-    # It would be nice that NumberT is actually the PT of Value.
-    if isinstance(expr, NumberT):
-        return expr
-
-    if not isinstance(expr, scalar_type):
-        # Then is an iterable, vectorize each element.
-        expr = cast(Iterable[NumberT | T], expr)
-        return tuple(
-            vectorize(symbol, input_names, output_name, scalar_type) for symbol in expr
-        )
-
-    if isinstance(input_names, dict):
-        it = zip(input_names.values(), input_names.keys())
+    positions: dict[Real | Symbol, int] = {}
+    if order is not None:
+        if not isinstance(order, Sequence) or isinstance(order, (str, bytes)):
+            raise TypeError("order must be a sequence of named Real or Symbol values.")
+        for index, input_value in enumerate(order):
+            value = _validate_input(input_value)
+            if value in positions:
+                raise ValueError("order must not contain repeated values.")
+            positions[value] = index
     else:
-        it = enumerate(input_names)
+        if not isinstance(indices, Mapping):
+            raise TypeError("indices must be a Mapping of named scalars to integers.")
+        for key, index in indices.items():
+            value = _validate_input(key)
+            if isinstance(index, bool) or not isinstance(index, int):
+                raise TypeError("indices must be Python integers, excluding bool.")
+            if index < 0:
+                raise ValueError("indices must be nonnegative.")
+            positions[value] = index
 
-    arr = Vector(output_name)
-
-    reps = {scalar_type(name): arr[ndx] for ndx, name in it}
+    target = Vector() if into is None else into
     from ..ops import substitute
 
-    return substitute(expr, reps)
+    return target, substitute(
+        expr, {value: target[i] for value, i in positions.items()}
+    )
 
 
-@overload
-def auto_vectorize(
-    expr: NumberT,
-    output_name: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> tuple[tuple[str, ...], Real]: ...
+def _validate_input(value: Any) -> Real | Symbol:
+    if not isinstance(value, (Real, Symbol)) or not isinstance(
+        get_symbolite_info(value).value, Name
+    ):
+        raise TypeError("Layouts must contain named Real or Symbol values.")
+    return value
+
+
+def vector_inputs(expr: Any) -> tuple[Real | Symbol, ...]:
+    """Return the scalar inputs used by auto_vectorize, in vector position order.
+
+    Discover free, unnamespaced Real and Symbol leaves, including subclasses,
+    using the same named-object traversal as other operations. Constants such
+    as ``real.pi``, existing Vectors, and Boolean leaves are excluded. Each
+    structurally distinct input occurs once. Inputs are sorted by name; equal
+    names retain their first-occurrence order without merging distinct types.
+    Pass namespaced scalar inputs explicitly to ``vectorize`` when needed.
+    """
+    from ..ops._get_name import get_full_name
+    from ..ops.base import free_values
+
+    inputs = (value for value in free_values(expr) if isinstance(value, (Real, Symbol)))
+    return tuple(sorted(inputs, key=get_full_name))
 
 
 @overload
 def auto_vectorize(
     expr: Real,
-    output_name: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> tuple[tuple[str, ...], Real]: ...
+    *,
+    into: Vector | None = None,
+) -> tuple[Vector, Real]: ...
 
 
 @overload
 def auto_vectorize(
-    expr: Iterable[Real],
-    output_name: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> tuple[tuple[str, ...], tuple[Real, ...]]: ...
+    expr: Symbol,
+    *,
+    into: Vector | None = None,
+) -> tuple[Vector, Real | Symbol]: ...
+
+
+@overload
+def auto_vectorize[N: NumberT](
+    expr: N,
+    *,
+    into: Vector | None = None,
+) -> tuple[Vector, N]: ...
+
+
+@overload
+def auto_vectorize(
+    expr: Any,
+    *,
+    into: Vector | None = None,
+) -> tuple[Vector, Any]: ...
 
 
 def auto_vectorize(
-    expr: NumberT | Real | Iterable[Real],
-    output_name: str = "vec",
-    scalar_type: type[Real] = Real,
-) -> tuple[
-    tuple[str, ...],
-    NumberT | Real | tuple[NumberT | Real, ...],
-]:
-    """Vectorize expression by replacing all test_scalar values
-    by an array at a given indices. Symbols are ordered into
-    the array alphabetically.
+    expr: Any,
+    *,
+    into: Vector | None = None,
+) -> tuple[Vector, Any]:
+    """Return ``(vector, rewritten)`` using the layout from vector_inputs(expr).
 
-    Parameters
-    ----------
-    expr
-    output_name
-        name of the array value
-
-    Returns
-    -------
-    tuple[str, ...]
-        symbol names as ordered in the array.
-    SymbolicExpression
-        vectorized expression.
-
+    ``into=None`` creates a fresh anonymous Vector. Supplying ``into`` reuses
+    that exact Vector. Inspect ``vector_inputs(expr)`` to pack concrete input
+    values in the same deterministic order. Constant inputs have an empty
+    layout and still return a Vector alongside the unchanged expression.
     """
-    from ..ops.base import value_names as _symbol_names
-
-    if isinstance(expr, NumberT):
-        return (), expr
-
-    if not isinstance(expr, (Symbol, Real, Vector)):
-        expr = tuple(expr)
-        out = set[str]()
-        for symbol in expr:
-            out.update(_symbol_names(symbol, ""))
-        symbol_names = tuple(sorted(out))
-        return symbol_names, vectorize(expr, symbol_names, output_name, scalar_type)
-    else:
-        symbol_names = tuple(sorted(_symbol_names(expr, "")))
-        return symbol_names, vectorize(expr, symbol_names, output_name, scalar_type)
+    return vectorize(expr, into=into, order=vector_inputs(expr))
