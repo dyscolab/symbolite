@@ -14,40 +14,53 @@ import types
 from typing import Any
 
 import sympy
-from sympy import Symbol
 from sympy.codegen.ast import (
     Assignment,
     CodeBlock,
     FunctionDefinition,
     Return,
-    real,
+    Variable,
+    untyped,
 )
 
-from ...abstract.lang import AssignInfo, BlockInfo
+from ...core.lang import Assign as _Assign
+from ...core.lang import Block as _Block
+from ...core.symbolite_object import get_symbolite_info
 from ...ops import get_name, translate
 
 
-def Assign(info: AssignInfo, libsl: types.ModuleType) -> Assignment:
-    """Translate an AssignInfo into a Python assignment statement."""
-    return Assignment(Symbol(get_name(info.lhs)), translate(info.rhs, libsl))
+def _parameter(value: Any, libsl: types.ModuleType) -> Variable:
+    symbol = translate(value, libsl)
+    try:
+        return Variable.deduced(symbol)
+    except ValueError:
+        # Generic symbols have no numeric type assumptions to infer from.
+        return Variable(symbol, type=untyped)
 
 
-def Block(info: BlockInfo, libsl: types.ModuleType):
-    """Translate a BlockInfo into a Python function definition."""
+def Assign(obj: _Assign, libsl: types.ModuleType) -> Assignment:
+    """Translate a symbolic assignment into a SymPy assignment node."""
+    info = get_symbolite_info(obj)
+    return Assignment(translate(info.lhs, libsl), translate(info.rhs, libsl))
 
-    parameters = tuple(Symbol(get_name(var), real=True) for var in info.inputs)
 
-    outputs = tuple(Symbol(get_name(var), real=True) for var in info.outputs)
+def Block(obj: _Block, libsl: types.ModuleType) -> FunctionDefinition:
+    """Translate a symbolic Block into a SymPy function-definition AST."""
+    info = get_symbolite_info(obj)
+
+    parameters = tuple(_parameter(var, libsl) for var in info.inputs)
+
+    outputs = tuple(translate(var, libsl) for var in info.outputs)
 
     if len(outputs) == 0:
-        ret = Return()
+        ret = Return(None)
     elif len(outputs) == 1:
         ret = Return(outputs[0])
     else:
         ret = Return(sympy.Tuple(*outputs))
 
     return FunctionDefinition(
-        return_type=real,
+        return_type=untyped,
         name=get_name(info),
         parameters=parameters,
         body=CodeBlock(
@@ -66,8 +79,9 @@ to_int = _return
 to_float = _return
 
 
-def to_tuple(value: tuple[Any, ...]):
-    return sympy.Tuple(value)
+def to_tuple(value: tuple[Any, ...], libsl: Any) -> sympy.Tuple:
+    # Children are already translated by the structural fold.
+    return sympy.Tuple(*value)
 
 
 def to_list(value: tuple[Any, ...], libsl: Any) -> list[Any]:
@@ -75,5 +89,4 @@ def to_list(value: tuple[Any, ...], libsl: Any) -> list[Any]:
 
 
 def to_dict(value: tuple[tuple[Any, Any], ...], libsl: Any) -> dict[Any, Any]:
-    items = to_tuple(value, libsl)
-    return dict(items)
+    return dict(value)

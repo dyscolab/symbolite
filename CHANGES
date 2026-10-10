@@ -3,6 +3,10 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Restore the SymPy backend's statement and container translation contracts;
+  preserve symbolic bindings and output order, and support zero-output blocks.
+- Skip only missing optional root dependencies during backend discovery;
+  surface internal import failures and explicitly check required backends in CI.
 - Share expression/container structure across translation, substitution, and
   named-object discovery, with explicit-stack traversal and cycle diagnostics.
 - Substitute nested tuples, lists, and dictionary keys/values simultaneously;

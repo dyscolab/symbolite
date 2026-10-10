@@ -2,7 +2,7 @@
 symbolite.impl.libsympy.symbol
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Translate symbolite.abstract.vector
+Translate symbolite.abstract.symbol
 into values and functions defined in SymPy.
 
 :copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
@@ -11,4 +11,8 @@ into values and functions defined in SymPy.
 
 from __future__ import annotations
 
+import sympy as sy
+
 from ..libstd.symbol import *
+
+Symbol = sy.Symbol

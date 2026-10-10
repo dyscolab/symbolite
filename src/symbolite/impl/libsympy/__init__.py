@@ -10,8 +10,8 @@ into values and functions defined in SymPy.
 """
 
 from .. import Kind
-from . import lang, real, symbol, vector
+from . import lang, real, symbol, value, vector
 
 KIND = Kind.VALUE
 
-__all__ = ["lang", "real", "symbol", "vector"]
+__all__ = ["lang", "real", "symbol", "value", "vector"]

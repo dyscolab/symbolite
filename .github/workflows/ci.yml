@@ -15,6 +15,10 @@ jobs:
       - uses: prefix-dev/setup-pixi@main
         with:
           environments: ${{ matrix.environment }}
+      - name: Check required backends
+        run: >-
+          pixi run --environment ${{ matrix.environment }} python -c
+          "from symbolite.impl import libstd, libnumpy, libsympy, libjax"
       - run: pixi run --environment ${{ matrix.environment }} test
 
   lint-test-build-publish:
@@ -32,6 +36,10 @@ jobs:
       - uses: prefix-dev/setup-pixi@main
       - name: Lint
         run: pixi run lint
+      - name: Check required backends
+        run: >-
+          pixi run python -c
+          "from symbolite.impl import libstd, libnumpy, libsympy, libjax"
       - name: Test
         run: pixi run test
       - name: Build

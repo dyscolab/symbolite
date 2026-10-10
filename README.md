@@ -130,6 +130,16 @@ like SymPy that contains a Scalar object you can still translate.
 
 which is actually a SymPy expression with a SymPy symbol (`x`).
 
+SymPy translation preserves `Real` symbols' real-valued assumptions. It converts
+`Assign` to a SymPy `Assignment` and `Block` to a `FunctionDefinition` AST, not a
+Python callable. Block outputs retain their declared order; a block with no
+outputs returns `None`. Tuples become SymPy tuples, while lists and dictionaries
+remain Python containers. Integer-indexed assignment targets require a SymPy
+`IndexedBase` with a shape, supplied through substitution.
+
+Backend discovery skips absent optional libraries, but propagates import errors
+inside installed libraries or Symbolite backends.
+
 And by the way, checkout `vectorize` and `auto_vectorize` functions
 in the vector module.
 
