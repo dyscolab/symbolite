@@ -8,17 +8,19 @@ Visualize symbolic structures.
 :license: BSD, see LICENSE for more details.
 """
 
-import itertools
 import sys
+from collections.abc import Iterator
 from functools import singledispatch
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, cast
 
 from ..core import Value
 from ..core.call import CallInfo
-from ..core.function import FunctionInfo, OperatorInfo
+from ..core.function import Function, FunctionInfo, Operator, OperatorInfo, UserFunction
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
 from ..core.value import Name
 from ..ops._get_name import get_full_name
+from ._dispatch import TraversalDispatch
+from ._traversal import Layer, pairs, project
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 
@@ -60,62 +62,142 @@ class Printer:
         self.indent_level -= 1
 
     def __del__(self):
-        self.flush_line()
-
-
-def _default_printer() -> Printer:
-    return Printer()
+        try:
+            if self._current_line:
+                self.flush_line()
+        except (OSError, ValueError):
+            # A supplied stream may already have been closed during cleanup.
+            pass
 
 
 @singledispatch
 def tree_view(obj: Any, pretty_printer: Printer | None = None):
-    pretty_printer = pretty_printer or _default_printer()
-    pretty_printer.append(str(obj))
+    """Print a structural tree without recursing through expression nodes.
+
+    Custom project adapters are visible in the output. Registered tree_view
+    handlers take precedence and can delegate to the saved parent handler.
+    With a supplied Printer, the final line remains pending for composition.
+    """
+    printer = pretty_printer if pretty_printer is not None else Printer()
+    stack: list[tuple[int | None, Iterator[tuple[str, Any]]]] = [
+        (None, iter((("node", obj),)))
+    ]
+    active: set[int] = set()
+    root = True
+    while stack:
+        identity, commands = stack[-1]
+        try:
+            action, value = next(commands)
+        except StopIteration:
+            stack.pop()
+            if identity is not None:
+                active.remove(identity)
+            continue
+
+        if action == "node":
+            if id(value) in active:
+                raise ValueError(
+                    f"Cycle detected while printing {type(value).__name__}."
+                )
+            selected = _dispatch.select(value, root=root)
+            root = False
+            if selected is not None:
+                _dispatch.invoke(value, selected, printer)
+                continue
+            layer = project(value)
+            active.add(id(value))
+            stack.append((id(value), _commands(value, layer)))
+        elif action == "append":
+            printer.append(value)
+        elif action == "indent":
+            printer.indent()
+        elif action == "dedent":
+            printer.dedent()
+        elif action == "flush":
+            printer.flush_line()
+
+    if pretty_printer is None:
+        printer.flush_line()
 
 
-@tree_view.register(SymboliteObject)
-def tree_view_symbolite_object(
-    obj: SymboliteObject[Any], pretty_printer: Printer | None = None
-):
-    pretty_printer = pretty_printer or _default_printer()
-    info = get_symbolite_info(obj)
-    tree_view(info, pretty_printer)
+def _items(
+    children: tuple[Any, ...], labels: tuple[str, ...] = ()
+) -> Iterator[tuple[str, Any]]:
+    for index, child in enumerate(children):
+        if labels:
+            yield "append", labels[index]
+        yield "node", child
+        if index < len(children) - 1:
+            yield "append", ","
+            yield "flush", None
 
 
-@tree_view.register(FunctionInfo | OperatorInfo)
-def tree_view_function(
-    obj: FunctionInfo[Any] | OperatorInfo[Any], pretty_printer: Printer | None = None
-):
-    pretty_printer = pretty_printer or _default_printer()
-    pretty_printer.append(f"{obj.namespace}.{obj.name}")
-
-
-@tree_view.register
-def tree_view_call(obj: CallInfo, pretty_printer: Printer | None = None):
-    pretty_printer = pretty_printer or _default_printer()
-    tree_view(obj.func, pretty_printer)
-    pretty_printer.append("(")
-    pretty_printer.indent()
-
-    for ndx, (k, v) in enumerate(
-        itertools.chain(((None, arg) for arg in obj.args), obj.kwargs_items)
-    ):
-        if k is not None:
-            pretty_printer.append(f"{k} = ")
-        tree_view(v, pretty_printer)
-        if ndx < len(obj.args) + len(obj.kwargs_items) - 1:
-            pretty_printer.append(",")
-            pretty_printer.flush_line()
-    pretty_printer.dedent()
-    pretty_printer.append(")")
-
-
-@tree_view.register(Value)
-def tree_view_value(obj: Value[Any], pretty_printer: Printer | None = None):
-    pretty_printer = pretty_printer or _default_printer()
-    info = get_symbolite_info(obj)
-    if isinstance(info.value, Name):
-        pretty_printer.append(get_full_name(info.value))
+def _commands(node: Any, layer: Layer) -> Iterator[tuple[str, Any]]:
+    labels: tuple[str, ...] = ()
+    if isinstance(node, (FunctionInfo, OperatorInfo)):
+        yield "append", f"{node.namespace}.{node.name}"
+    elif layer.kind == "atom":
+        name = get_symbolite_info(node).value if isinstance(node, Value) else None
+        if isinstance(name, Name):
+            yield "append", get_full_name(name)
+        elif isinstance(node, (Function, Operator)):
+            info = get_symbolite_info(cast(SymboliteObject[Any], node))
+            yield "append", f"{info.namespace}.{info.name}"
+        elif isinstance(node, UserFunction):
+            yield "append", str(get_symbolite_info(node))
+        else:
+            yield "append", str(node)
+    elif layer.kind == "value":
+        yield "append", f"{type(node).__name__}#"
+        yield "node", layer.children[0]
+    elif layer.kind == "call":
+        info = get_symbolite_info(node) if isinstance(node, SymboliteObject) else node
+        yield "node", layer.children[0]
+        yield "append", "("
+        yield "indent", None
+        labels = ("",) * len(info.args) + tuple(
+            f"{key} = " for key, _ in info.kwargs_items
+        )
+        yield from _items(layer.children[1:], labels)
+        yield "dedent", None
+        yield "append", ")"
     else:
-        pretty_printer.append(f"{obj.__class__.__name__}#")
-        tree_view(info.value, pretty_printer)
+        match layer.kind:
+            case "tuple":
+                opening, closing = "(", ")"
+            case "list":
+                opening, closing = "[", "]"
+            case "dict":
+                opening, closing = "{", "}"
+            case "object" | "record":
+                info_type = (
+                    type(get_symbolite_info(node))
+                    if layer.kind == "object"
+                    else layer.data
+                )
+                opening, closing = f"{type(node).__name__}(", ")"
+                labels = tuple(f"{name} = " for name in info_type._fields)
+            case _:
+                opening, closing = f"{type(node).__name__}(", ")"
+        yield "append", opening
+        if layer.children:
+            yield "indent", None
+            if layer.kind == "dict":
+                entries = pairs(layer.children)
+                for index, (key, value) in enumerate(entries):
+                    yield "node", key
+                    yield "append", ": "
+                    yield "node", value
+                    if index < len(entries) - 1:
+                        yield "append", ","
+                        yield "flush", None
+            else:
+                yield from _items(layer.children, labels)
+            yield "dedent", None
+        yield "append", closing
+
+
+for _type in (SymboliteObject, Value, CallInfo, FunctionInfo, OperatorInfo):
+    tree_view.register(_type, tree_view.dispatch(object))
+
+_dispatch = TraversalDispatch(tree_view, metadata_exclusions=(Value,))

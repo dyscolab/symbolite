@@ -151,10 +151,163 @@ and you can register implementations for other backends:
 ```python
 >>> def np_abs_times_two(x: float) -> float:
 ...     return 2 * np.abs(x)
->>> uf.register_impl(libnumpy, np_abs_times_two)
+>>> uf.register_impl(np_abs_times_two, libsl=libnumpy)
 >>> translate(uf(-1), libnumpy)
 2
 ```
+
+Backend registration does not change a user function's equality or hash, nor
+those of expressions containing it. Separately constructed user functions are
+distinct, even with the same name and signature. Shallow and deep copies retain
+the same function identity and share its implementation registry, so later
+registrations remain visible through those copies.
+
+### Structural traversal and extensions
+
+`symbolite.ops.traversal` exposes the shared structure used by translation,
+substitution, named-value inspection, and tree printing:
+
+- `project(obj)` describes one node as a `Layer(kind, data, children)`.
+- `rebuild(layer, children)` reconstructs a node from replacement children.
+- `fold(obj, algebra)` interprets nodes bottom-up; the algebra receives a layer
+  and the already interpreted children.
+- `walk(obj)` yields nodes lazily in preorder.
+- `rewrite(obj, replace)` applies replacements before visiting children.
+- `transform(obj, rule)` transforms children first, then applies the rule to the
+  reconstructed parent.
+
+Rewrite and transform rules return `KEEP` to retain a node. A replacement is
+final for that occurrence and is not visited again. Substitution, rewriting,
+and transformation produce fresh containers for every traversed exact built-in
+list and dictionary, including empty ones. Tuples and symbolic nodes retain
+identity when their children do; parents enclosing copied containers are rebuilt.
+Shared subtrees are processed per occurrence, so repeated occurrences of an
+input list or dictionary produce separate output containers. Numerical user
+functions are not memoized. Traversal uses explicit stacks and rejects active
+ancestor cycles.
+
+This is container ownership, not a deep copy of every object. Symbolic leaves,
+arrays, other foreign leaves, and unadapted container subclasses may remain
+shared. Explicit replacements are returned as supplied, and operation-specific
+handlers control their own output ownership. With `transform`, a rule returning
+`KEEP` retains the rebuilt node, including any fresh containers.
+
+Reconstruction preserves a symbolic wrapper's concrete subclass and extra
+state without rerunning its constructor. Rebuilt Blocks and `BlockInfo` records
+are checked against the same dependency and output rules as the Block
+constructor. With `transform`, automatic Block reconstruction is provisional
+until the parent rule finishes, so that rule can repair inputs or outputs to
+match its transformed children. The resulting Block or `BlockInfo` is then
+validated, including one returned explicitly by the rule. Direct `rebuild`
+calls still validate immediately, even inside a transform rule. Custom
+rebuilders retain their own validation behavior, and other explicit replacement
+subtrees are not visited for validation.
+
+Statement substitution also uses the iterative traversal; Block interfaces
+retain their special vector-item mapping policy, and Block names are not
+substituted. Native statement translation checks structural cycles and Block
+dependencies before calling the backend, without evaluating expressions.
+These checks run on every native statement translation because mutable
+payloads can change after construction. Registered operation handlers still
+prune their subtrees; translation overrides that do not delegate to a native
+parent handler remain responsible for their own validation.
+
+```python
+from symbolite import Real, substitute
+
+x = Real("x")
+original = {"values": [x]}
+result = substitute(original, {})
+result["values"].append(3)
+
+assert original["values"] == [x]
+assert result["values"][0] is x
+```
+
+`rewrite` also accepts `replace_layer=callback`. This callback receives the
+original node and its projected layer after the initial replacement rule returns
+`KEEP`, and can replace it before descent without projecting it a second time.
+
+For example, bottom-up transformation lets a parent see an unwrapped child:
+
+```python
+from symbolite.ops.traversal import KEEP, transform
+
+def unwrap_singleton(node):
+    if type(node) is list and len(node) == 1:
+        return node[0]
+    return KEEP
+
+assert transform([[[3]]], unwrap_singleton) == 3
+```
+
+`Layer.kind` is an open string tag, independent of backend `Kind`. Built-in
+adapters use these payload and child conventions:
+
+| Kind | Data | Children |
+|---|---|---|
+| `atom` | Original leaf | None |
+| `value` | Original symbolic value | Wrapped payload |
+| `call` | Original `Call` or `CallInfo` | Function, positional arguments, then keyword values |
+| `object` | Original Symbolite wrapper | Metadata fields in order |
+| `record` | Metadata record type | Record fields in order |
+| `tuple`, `list` | `None` | Elements in order |
+| `dict` | `None` | Alternating keys and values in insertion order |
+
+Only `children` are traversed; `data` is reconstruction metadata. Exact built-in
+tuple/list/dict objects have adapters. Unadapted container subclasses and foreign
+arrays remain atomic. Adapter callbacks should describe structure without
+mutating the original object.
+
+For a custom structure, register its projection and its layer subclass's
+rebuilder. Choose a distinct kind to keep the built-in payload conventions clear.
+Use `translate_layer.register` when the structure needs backend semantics beyond
+rebuilding around translated children:
+
+```python
+from dataclasses import dataclass
+from typing import Any
+
+from symbolite import Real, substitute, translate
+from symbolite.impl import libstd
+from symbolite.ops import translate_layer
+from symbolite.ops.traversal import Layer, project, rebuild
+
+@dataclass(frozen=True)
+class Box:
+    value: Any
+
+@dataclass(frozen=True)
+class BoxLayer(Layer):
+    pass
+
+@project.register(Box)
+def project_box(obj):
+    return BoxLayer("box", None, (obj.value,))
+
+@rebuild.register(BoxLayer)
+def rebuild_box(layer, children):
+    return Box(children[0])
+
+@translate_layer.register(BoxLayer)
+def translate_box(layer, children, libsl):
+    return children[0]
+
+x = Real("x")
+assert translate(substitute(Box(x + 1), {x: 4}), libstd) == 5
+```
+
+Object-level `.register()` handlers take precedence and prune structural
+traversal. Existing handlers can delegate to a saved parent and have cycle
+protection, but their ordinary Python calls can still reach the recursion limit.
+Structural adapters let the traversal process children iteratively;
+`translate_layer` handlers then receive those processed children without
+recursive parent calls, so they support deeply nested structures.
+
+`tree_view()` also uses structural adapters and iterative traversal. Containers
+and custom structures are shown as nested children; expression call formatting
+is preserved. A default printer flushes the final line before returning. With a
+supplied `Printer`, call `flush_line()` when finished composing output.
 
 ### Installing:
 

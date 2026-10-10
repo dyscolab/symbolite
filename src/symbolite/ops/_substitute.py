@@ -9,14 +9,29 @@ Replace symbols, functions, values, etc by others.
 """
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from functools import singledispatch
 from typing import Any
 
 from ..abstract.vector import getitem
 from ..core.call import Call
-from ..core.lang import Assign, Block
+from ..core.lang import Assign, Block, BlockInfo
 from ..core.symbolite_object import get_symbolite_info
-from ..core.value import Name, Value
+from ..core.value import Value
+from ._dispatch import TraversalDispatch
+from ._traversal import KEEP, Layer, _fold, _rebuild_result, project
+
+
+@dataclass(frozen=True)
+class _BlockLayer(Layer):
+    """Substitution-only view: bind the interface, traverse the body iteratively.
+
+    Data retains the original projection for reconstruction. The interface is
+    already mapped simultaneously; only body lines become traversed children.
+    """
+
+    inputs: tuple[Value[Any], ...] = ()
+    outputs: tuple[Value[Any], ...] = ()
 
 
 @singledispatch
@@ -29,35 +44,77 @@ def substitute(obj: Any, replacements: Mapping[Any, Any]) -> Any:
         symbolic expression.
     replacements
         replacement dictionary.
+
+    Notes
+    -----
+    Replaces named values, functions, and hashable atomic literals
+    simultaneously. Compound expressions are not mapping targets; use
+    ``ops.traversal.rewrite`` for an explicit subtree policy. Built-in containers
+    recurse through keys and values; rewritten duplicate keys raise ValueError.
+    Traversed exact built-in lists and dictionaries are fresh containers, even
+    without replacements. Other nodes retain identity when their children do.
+    Replacement objects are returned as supplied. Foreign leaves, including
+    arrays and unadapted container subclasses, are not copied.
+    Statements use the same iterative traversal, preserve subclass state, and
+    validate rebuilt Block dependencies. Block interfaces retain their special
+    vector-item substitution policy; the Block name is not substituted.
     """
-    return replacements.get(obj, obj)
 
+    def replace(node: Any, layer: Layer) -> Any:
+        if layer.kind != "atom":
+            return KEEP
+        try:
+            hash(node)
+        except TypeError:
+            return KEEP
+        return replacements.get(node, KEEP)
 
-@substitute.register(Value)
-def substitute_value[R: Value[Any]](obj: R, mapper: Mapping[Any, Any]) -> R:
-    info = get_symbolite_info(obj)
-    if isinstance(info.value, Name):
-        return mapper.get(obj, obj)
-    return obj.__class__(substitute(info.value, mapper))
+    def project_node(node: Any) -> Layer:
+        layer = project(node)
+        if layer.kind != "object" or not isinstance(node, Block):
+            return layer
+        info = get_symbolite_info(node)
+        if not isinstance(info, BlockInfo):
+            return layer
+        inputs, _ = _subs(info.inputs, replacements)
+        outputs, out_vec = _subs(info.outputs, replacements)
+        return _BlockLayer(
+            "block_substitution",
+            layer,
+            info.lines,
+            inputs + out_vec if out_vec else inputs,
+            outputs,
+        )
 
+    def combine(node: Any, layer: Layer, children: tuple[Any, ...]) -> Any:
+        if isinstance(layer, _BlockLayer):
+            info = get_symbolite_info(node)
+            lines = (
+                info.lines
+                if all(a is b for a, b in zip(info.lines, children, strict=True))
+                else children
+            )
+            return _rebuild_result(
+                node, layer.data, (layer.inputs, layer.outputs, lines, info.name)
+            )
+        return _rebuild_result(node, layer, children)
 
-@substitute.register
-def substitue_call(obj: Call, mapper: Mapping[Any, Any]) -> Call:
-    info = get_symbolite_info(obj)
-    func = mapper.get(info.func, info.func)
-    args = tuple(substitute(arg, mapper) for arg in info.args)
-    kwargs = {k: substitute(arg, mapper) for k, arg in info.kwargs_items}
-
-    return Call(func, args, tuple(kwargs.items()))
-
-
-@substitute.register
-def substitue_assign(obj: Assign, mapper: Mapping[Any, Any]) -> Assign:
-    info = get_symbolite_info(obj)
-    return Assign(
-        substitute(info.lhs, mapper),
-        substitute(info.rhs, mapper),
+    return _fold(
+        obj,
+        combine,
+        _dispatch.visit(replacements),
+        replace,
+        project_node=project_node,
     )
+
+
+_dispatch = TraversalDispatch(substitute)
+
+
+# Keep specific dispatch entries so broad wrapper overrides do not displace
+# statement behavior. Saved parent handlers can still delegate to the fold.
+for _type in (Assign, Block):
+    substitute.register(_type, substitute.dispatch(object))
 
 
 def is_vector_item(el: Value[Any]) -> tuple[bool, tuple[Any, ...]]:
@@ -65,10 +122,10 @@ def is_vector_item(el: Value[Any]) -> tuple[bool, tuple[Any, ...]]:
     if not isinstance(info.value, Call):
         return False, ()
     call = info.value
-    info = get_symbolite_info(call)
-    if info.func is not getitem:
+    call_info = get_symbolite_info(call)
+    if call_info.func is not getitem:
         return False, ()
-    return True, info.args
+    return True, call_info.args
 
 
 def _subs(
@@ -90,19 +147,9 @@ def _subs(
         else:
             out.append(mapped)
 
-    return tuple(out), tuple(vec_added)
-
-
-@substitute.register
-def substitue_block(obj: Block, mapper: Mapping[Any, Any]) -> Block:
-    info = get_symbolite_info(obj)
-
-    inputs, _ = _subs(info.inputs, mapper)
-    outputs, out_vec = _subs(info.outputs, mapper)
-
-    return Block(
-        inputs + out_vec,
-        outputs,
-        lines=tuple(substitute(el, mapper) for el in info.lines),
-        name=info.name,
-    )
+    result = tuple(out)
+    if len(content) == len(result) and all(
+        a is b for a, b in zip(content, result, strict=True)
+    ):
+        result = content
+    return result, tuple(vec_added)

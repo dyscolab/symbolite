@@ -1,6 +1,50 @@
 Symbolite Changelog
 ===================
 
+Unreleased
+----------
+- Share expression/container structure across translation, substitution, and
+  named-object discovery, with explicit-stack traversal and cycle diagnostics.
+- Substitute nested tuples, lists, and dictionary keys/values simultaneously;
+  preserve unchanged symbolic identity where possible and reject rewritten
+  dictionary key collisions.
+- Preserve nested operation registrations and parent-handler delegation;
+  leave unadapted container subclasses and foreign arrays atomic.
+- Centralize traversal dispatch compatibility and consolidate structural
+  translation handlers while retaining operation-specific metadata rules.
+- Share backend language delegation across literals and statements, and
+  qualified-name resolution across functions/operators; preserve subclass
+  routing and independent type overrides.
+- Raise unsupported backend capabilities consistently and require explicit
+  user-function implementations for code backends.
+- Convert container children once; distinguish Python string literals from
+  source fragments, including attribute names and empty tuples.
+- Preserve first-occurrence order with efficient free-value deduplication.
+- Project substitution nodes once and guard cycles across parent-handler
+  delegation without leaking generator context between yields.
+- Expose ops.traversal, bottom-up transform with structural sharing, and
+  translate_layer registration for custom structural backend semantics.
+- Print deep expression/container trees iteratively using structural adapters.
+- Preserve backend exceptions with bounded diagnostics, including failing repr
+  methods; keep traversal exhaustion out of exception context.
+- Give traversed built-in lists and dictionaries fresh containers during
+  substitution, rewrite, and transform, including nested/empty containers;
+  retain sharing of unchanged symbolic branches and foreign leaves, and leave
+  explicit replacement ownership to callers.
+- Substitute statements iteratively while preserving wrapper subclasses and
+  extra state, vectorized Block interfaces, and unchanged Block names; diagnose
+  statement cycles without reaching the recursion limit.
+- Validate reconstructed Blocks and BlockInfo records against dependency and
+  output rules, including reconstruction during rewrite and transform.
+- Validate transform's Block results after the parent rule, allowing interface
+  repairs without weakening direct rebuild checks or custom rebuilder behavior.
+- Check statement cycles and Block dependencies before native backend
+  translation, including post-construction mutations; retain registered
+  subtree pruning and avoid evaluating expressions during validation.
+- Keep user-function and expression equality/hashes stable across backend
+  registration with a separate implementation registry; preserve function
+  identity and registrations across copies, while keeping independently
+  constructed functions distinct even when their names/signatures match.
 
 1.1.1 (2023-9-4)
 ------------------

@@ -19,6 +19,7 @@ from ...abstract.lang import Block as _Block
 from ...core.symbolite_object import get_symbolite_info
 from ...ops._get_name import get_full_name, get_name
 from ...ops._translate import translate
+from ._codeexpr import CodeExpr
 
 
 def Block(obj: _Block, libsl: Any) -> str:
@@ -80,19 +81,24 @@ def to_float(value: float, libsl: Any) -> str:
     return repr(value)
 
 
+def to_str(value: str, libsl: Any) -> CodeExpr:
+    return CodeExpr(repr(value))
+
+
 def to_tuple(value: tuple[Any, ...], libsl: Any) -> str:
-    value = (translate(v, libsl) for v in value)
+    # Children have already been translated by the structural fold.
+    if not value:
+        return "()"
     return f"({', '.join(map(str, value))}, )"
 
 
 def to_list(value: tuple[Any, ...], libsl: Any) -> str:
-    value = (translate(v, libsl) for v in value)
     return f"[{', '.join(map(str, value))}]"
 
 
 def to_dict(value: tuple[tuple[Any, Any], ...], libsl: Any) -> str:
-    items = to_tuple(value, libsl)
-    return f"dict({items})"
+    items = (f"({key}, {item})" for key, item in value)
+    return f"dict([{', '.join(items)}])"
 
 
 __all__ = [
@@ -103,5 +109,6 @@ __all__ = [
     "to_float",
     "to_int",
     "to_list",
+    "to_str",
     "to_tuple",
 ]

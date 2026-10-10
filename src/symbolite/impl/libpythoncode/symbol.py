@@ -11,7 +11,7 @@ Code-emitting counterparts for ``symbolite.abstract.symbol``.
 from __future__ import annotations
 
 from ...abstract import symbol as abstract_symbol
-from ._codeexpr import CodeExpr, as_function, as_operator
+from ._codeexpr import CodeExpr, as_function, as_operator, make_function
 
 eq = as_operator(abstract_symbol.eq)
 ne = as_operator(abstract_symbol.ne)
@@ -21,7 +21,7 @@ gt = as_operator(abstract_symbol.gt)
 ge = as_operator(abstract_symbol.ge)
 
 getitem = as_operator(abstract_symbol.getitem)
-symgetattr = as_operator(abstract_symbol.symgetattr)
+symgetattr = make_function("getattr")
 
 add = as_operator(abstract_symbol.add)
 sub = as_operator(abstract_symbol.sub)

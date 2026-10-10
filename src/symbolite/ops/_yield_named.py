@@ -1,73 +1,33 @@
-"""
-symbolite.ops._yield_named
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Yields all named structures inside a symbolic structure.
-
-:copyright: 2023 by Symbolite Authors, see AUTHORS for more details.
-:license: BSD, see LICENSE for more details.
-"""
+"""Named-object discovery over the shared structural traversal."""
 
 from collections.abc import Generator
 from functools import singledispatch
 from typing import Any
 
-from ..core import (
-    Call,
-    Function,
-    Value,
-)
-from ..core.function import Operator, UserFunction
+from ..core.call import Call
+from ..core.function import Function, Operator, UserFunction
 from ..core.symbolite_object import SymboliteObject, get_symbolite_info
-from ..core.value import Name
+from ..core.value import Name, Value
+from ._dispatch import TraversalDispatch
 
 
 @singledispatch
 def yield_named(obj: Any) -> Generator[SymboliteObject[Any], None, None]:
-    """Yields all named structures inside a symbolic structure."""
-    return
-    yield SymboliteObject()  # This is required to make it a generator.
+    """Yield named values/functions in preorder, once per occurrence.
+
+    Registered operation handlers override structural adapters at any depth.
+    Dictionary keys and values are inspected in insertion order.
+    """
+
+    for node, selected in _dispatch.walk(obj):
+        if selected is not None:
+            yield from _dispatch.iterate(node, selected)
+        elif isinstance(node, (Function, Operator, UserFunction)) or (
+            isinstance(node, Value) and isinstance(get_symbolite_info(node).value, Name)
+        ):
+            yield node
 
 
-@yield_named.register(tuple)
-@yield_named.register(list)
-def yield_named_tuple(obj: tuple[Any]) -> Generator[SymboliteObject[Any], None, None]:
-    for el in obj:
-        yield from yield_named(el)
-
-
-@yield_named.register(SymboliteObject)
-def yield_named_symbolite_object(
-    obj: SymboliteObject[Any],
-) -> Generator[SymboliteObject[Any], None, None]:
-    info = get_symbolite_info(obj)
-    yield from yield_named(info)
-
-
-@yield_named.register(Value)
-def yield_named_value(
-    obj: Value[Any],
-) -> Generator[SymboliteObject[Any], None, None]:
-    info = get_symbolite_info(obj)
-    if isinstance(info.value, Name):
-        yield obj
-    else:
-        yield from yield_named(info.value)
-
-
-@yield_named.register(Function | Operator | UserFunction)
-def yield_named_base_function(
-    obj: Function[Any] | Operator[Any] | UserFunction[Any, Any, Any],
-) -> Generator[SymboliteObject[Any], None, None]:
-    yield obj
-
-
-@yield_named.register
-def yield_named_call(obj: Call) -> Generator[SymboliteObject[Any], None, None]:
-    info = get_symbolite_info(obj)
-    yield from yield_named(info.func)
-    for arg in info.args:
-        yield from yield_named(arg)
-
-    for _, v in info.kwargs_items:
-        yield from yield_named(v)
+_dispatch = TraversalDispatch(
+    yield_named, metadata_exclusions=(Value, Call, Function, Operator, UserFunction)
+)

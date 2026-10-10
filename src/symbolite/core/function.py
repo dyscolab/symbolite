@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import types
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any, Literal, NamedTuple, Protocol, Self, cast
+from uuid import UUID, uuid4
 
 from .call import Call
 from .symbolite_object import SymboliteObject, get_symbolite_info, set_symbolite_info
@@ -178,6 +180,32 @@ class BinaryOperator[I1, I2, O: Value[Any]](Operator[O]):
         return super().__call__(arg1, arg2)
 
 
+@dataclass(frozen=True)
+class _UserFunctionRegistry[P, T]:
+    """Stable function identity with a shared, mutable implementation catalog."""
+
+    _identity: UUID = field(default_factory=uuid4, init=False, repr=False)
+    _impls: list[tuple[types.ModuleType | Literal["default"], Callable[[P], T]]] = (
+        field(default_factory=list, compare=False, repr=False)
+    )
+
+    @property
+    def impls(
+        self,
+    ) -> tuple[tuple[types.ModuleType | Literal["default"], Callable[[P], T]], ...]:
+        return tuple(self._impls)
+
+    def register(
+        self, func: Callable[[P], T], libsl: types.ModuleType | Literal["default"]
+    ) -> None:
+        self._impls.append((libsl, func))
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        # A copied expression still refers to the same logical function, so
+        # future registrations must remain visible through either copy.
+        return self
+
+
 class UserFunctionInfo[P, T, O: Value[Any]](NamedTuple):
     name: str
     namespace: str
@@ -185,10 +213,22 @@ class UserFunctionInfo[P, T, O: Value[Any]](NamedTuple):
     arity: int | None
     # Result symbolic class
     output_type: type[O]
-    impls: tuple[tuple[types.ModuleType | Literal["default"], Callable[[P], T]], ...]
+    registry: _UserFunctionRegistry[P, T]
+
+    @property
+    def impls(
+        self,
+    ) -> tuple[tuple[types.ModuleType | Literal["default"], Callable[[P], T]], ...]:
+        return self.registry.impls
 
 
 class UserFunction[P, T, O: Value[Any]](SymboliteObject[UserFunctionInfo[P, T, O]]):
+    """A user callable with identity independent of backend registrations.
+
+    Separately constructed functions are distinct, even with identical names
+    and signatures. Copies retain identity and share backend registrations.
+    """
+
     def __init__(
         self,
         name: str,
@@ -198,7 +238,10 @@ class UserFunction[P, T, O: Value[Any]](SymboliteObject[UserFunctionInfo[P, T, O
         output_type: type[O],
     ) -> None:
         set_symbolite_info(
-            self, UserFunctionInfo(name, namespace, arity, output_type, ())
+            self,
+            UserFunctionInfo(
+                name, namespace, arity, output_type, _UserFunctionRegistry[P, T]()
+            ),
         )
 
     @classmethod
@@ -215,8 +258,7 @@ class UserFunction[P, T, O: Value[Any]](SymboliteObject[UserFunctionInfo[P, T, O
         self, func: Callable[[P], T], libsl: types.ModuleType | Literal["default"]
     ) -> None:
         info = get_symbolite_info(self)
-        info = info._replace(impls=info.impls + ((libsl, func),))
-        set_symbolite_info(self, info)
+        info.registry.register(func, libsl)
 
     def __call__(self, *args: Any, **kwds: Any) -> O:
         info = get_symbolite_info(self)

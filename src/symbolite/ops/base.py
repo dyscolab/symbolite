@@ -14,7 +14,7 @@ import collections
 import types
 import warnings
 from collections.abc import Callable
-from typing import Any
+from typing import Any, TypeGuard
 
 from ..core.symbolite_object import get_symbolite_info
 from ..core.value import Name, Value
@@ -35,6 +35,10 @@ def count_named(obj: Any) -> dict[Any, int]:
     cnt = collections.Counter[Any](yield_named(obj))
     if cnt:
         return dict(cnt)
+    try:
+        hash(obj)
+    except TypeError:
+        return {}
     return {obj: 1}
 
 
@@ -65,7 +69,7 @@ def evaluate(expr: Any, libsl: types.ModuleType | None = None) -> Any:
     return translate(expr, libsl)
 
 
-def is_free_value(obj: Any) -> bool:
+def is_free_value(obj: Any) -> TypeGuard[Value[Any]]:
     from ..core.value import Value
 
     if not isinstance(obj, Value):
@@ -78,12 +82,7 @@ def is_free_value(obj: Any) -> bool:
 def free_values(obj: Any) -> tuple[Value[Any], ...]:
     from . import yield_named
 
-    seen: list[Any] = []
-    for el in filter(is_free_value, yield_named(obj)):
-        if el not in seen:
-            seen.append(el)
-
-    return tuple(seen)
+    return tuple(dict.fromkeys(filter(is_free_value, yield_named(obj))))
 
 
 def compare_namespace(namespace: str) -> Callable[[Any], bool]:
