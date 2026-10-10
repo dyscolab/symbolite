@@ -3,6 +3,9 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Align real-function signatures with their public mathematical contracts:
+  add `VariadicFunction` for `hypot`, repair binary declarations, and preserve
+  `fmod`'s dividend-sign convention in the SymPy backend.
 - Reject implicit truth conversion of symbolic values. Boolean permits only
   direct Python bool literals; names and expressions require explicit evaluation.
 - Preserve nested-power grouping and signed literal bases in generated Python

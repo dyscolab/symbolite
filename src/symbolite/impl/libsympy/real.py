@@ -94,10 +94,33 @@ expm1 = sy.Lambda(x, sy.exp(x) - 1)
 fabs = sy.Abs
 factorial = Unsupported
 floor = sy.floor
-fmod = sy.Mod
+
+
+def fmod(
+    dividend: Any,
+    divisor: Any,
+    _floor=sy.floor,
+    _ceiling=sy.ceiling,
+    _piecewise=sy.Piecewise,
+) -> Any:
+    """Implement math.fmod's dividend-sign convention symbolically."""
+    quotient = dividend / divisor
+    truncated = _piecewise(
+        (_floor(quotient), quotient >= 0),
+        (_ceiling(quotient), True),
+    )
+    return dividend - divisor * truncated
+
+
 frexp = Unsupported
 gamma = Unsupported
-hypot = sy.Lambda((x, y), sy.sqrt(x * x + y * y))
+
+
+def hypot(*coordinates: Any, _sqrt=sy.sqrt) -> Any:
+    """Match math.hypot's zero-or-more-coordinate public contract."""
+    return _sqrt(sum(coordinate * coordinate for coordinate in coordinates))
+
+
 isfinite = Unsupported
 isinf = Unsupported
 isnan = Unsupported

@@ -19,6 +19,7 @@ from ..core.function import (
     Function3,
     UnaryFunction,
     UnaryOperator,
+    VariadicFunction,
 )
 from .boolean import Boolean
 
@@ -204,7 +205,6 @@ UnFun = UnaryFunction[Real | NumberT, Real]
 BinFun = BinaryFunction[Real | NumberT, Real]
 
 # "gcd": None,  # 1 to ---
-# "hypot": None,  # 1 to ---
 # "isclose": None,  # 2, 3, 4
 # "lcm": None,  # 1 to ---
 # "perm": None,  # 1 or 2
@@ -219,8 +219,8 @@ atan = UnFun("atan", "real", output_type=Real)
 atan2 = BinFun("atan2", "real", output_type=Real)
 atanh = UnFun("atanh", "real", output_type=Real)
 ceil = UnFun("ceil", "real", output_type=Real)
-comb = UnFun("comb", "real", output_type=Real)
-copysign = UnFun("copysign", "real", output_type=Real)
+comb = BinFun("comb", "real", output_type=Real)
+copysign = BinFun("copysign", "real", output_type=Real)
 cos = UnFun("cos", "real", output_type=Real)
 cosh = UnFun("cosh", "real", output_type=Real)
 degrees = UnFun("degrees", "real", output_type=Real)
@@ -231,10 +231,10 @@ expm1 = UnFun("expm1", "real", output_type=Real)
 fabs = UnFun("fabs", "real", output_type=Real)
 factorial = UnFun("factorial", "real", output_type=Real)
 floor = UnFun("floor", "real", output_type=Real)
-fmod = UnFun("fmod", "real", output_type=Real)
+fmod = BinFun("fmod", "real", output_type=Real)
 frexp = UnFun("frexp", "real", output_type=Real)
 gamma = UnFun("gamma", "real", output_type=Real)
-hypot = UnFun("gamma", "real", output_type=Real)
+hypot = VariadicFunction[Real | NumberT, Real]("hypot", "real", output_type=Real)
 isfinite = UnFun("isfinite", "real", output_type=Real)
 isinf = UnFun("isinf", "real", output_type=Real)
 isnan = UnFun("isnan", "real", output_type=Real)
@@ -246,7 +246,7 @@ log10 = UnFun("log10", "real", output_type=Real)
 log1p = UnFun("log1p", "real", output_type=Real)
 log2 = UnFun("log2", "real", output_type=Real)
 modf = UnFun("modf", "real", output_type=Real)
-nextafter = UnFun("nextafter", "real", output_type=Real)
+nextafter = BinFun("nextafter", "real", output_type=Real)
 pow = BinFun("pow", "real", output_type=Real)
 radians = UnFun("radians", "real", output_type=Real)
 remainder = BinFun("remainder", "real", output_type=Real)
@@ -275,4 +275,5 @@ del (
     UnOp,
     BinFun,
     UnFun,
+    VariadicFunction,
 )

@@ -95,7 +95,21 @@ floor = np.floor
 fmod = np.fmod
 frexp = np.frexp
 gamma = Unsupported
-hypot = np.hypot
+
+
+def hypot(*coordinates: Any, _hypot=np.hypot, _abs=np.abs) -> Any:
+    """Match math.hypot's zero-or-more-coordinate public contract."""
+    if not coordinates:
+        return 0.0
+    if len(coordinates) == 1:
+        return _abs(coordinates[0])
+
+    result = coordinates[0]
+    for coordinate in coordinates[1:]:
+        result = _hypot(result, coordinate)
+    return result
+
+
 isfinite = np.isfinite
 isinf = np.isinf
 isnan = np.isnan

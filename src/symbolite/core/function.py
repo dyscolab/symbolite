@@ -67,6 +67,16 @@ class Function[O: Value[Any]](SymboliteObject[FunctionInfo[O]]):
         return info.output_type(expr)
 
 
+class VariadicFunction[I, O: Value[Any]](Function[O]):
+    """A function with a homogeneous, variadic positional argument list."""
+
+    def __init__(self, name: str, namespace: str = "", *, output_type: type[O]) -> None:
+        super().__init__(name, namespace, arity=None, output_type=output_type)
+
+    def __call__(self, *args: I) -> O:
+        return super().__call__(*args)
+
+
 class UnaryFunction[I, O: Value[Any]](Function[O]):
     def __init__(self, name: str, namespace: str = "", *, output_type: type[O]) -> None:
         set_symbolite_info(self, FunctionInfo(name, namespace, 1, output_type))

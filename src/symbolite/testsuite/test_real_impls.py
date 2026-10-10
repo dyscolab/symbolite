@@ -37,7 +37,7 @@ _functions = {
     "frexp": (3.0,),
     "gamma": (3,),
     # "gcd": (1, 2),
-    # "hypot": (1, 2),
+    "hypot": (1, 2),
     # "isclose": (1, 2),
     "isfinite": (3,),
     "isinf": (3,),
