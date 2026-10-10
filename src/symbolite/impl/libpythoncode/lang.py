@@ -19,7 +19,7 @@ from ...abstract.lang import Block as _Block
 from ...core.symbolite_object import get_symbolite_info
 from ...ops._get_name import get_full_name, get_name
 from ...ops._translate import translate
-from ._codeexpr import CodeExpr
+from ._codeexpr import CodeExpr, _coerce
 
 
 def Block(obj: _Block, libsl: Any) -> str:
@@ -73,12 +73,12 @@ def to_bool(value: bool, libsl: Any) -> str:
     return "True" if value else "False"
 
 
-def to_int(value: int, libsl: Any) -> str:
-    return repr(value)
+def to_int(value: int, libsl: Any) -> CodeExpr:
+    return _coerce(value)
 
 
-def to_float(value: float, libsl: Any) -> str:
-    return repr(value)
+def to_float(value: float, libsl: Any) -> CodeExpr:
+    return _coerce(value)
 
 
 def to_str(value: str, libsl: Any) -> CodeExpr:

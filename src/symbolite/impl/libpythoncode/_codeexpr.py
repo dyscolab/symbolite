@@ -39,7 +39,9 @@ def _coerce(value: Any) -> CodeExpr:
     if isinstance(value, bool):
         return CodeExpr("True" if value else "False")
     if isinstance(value, (int, float, complex)):
-        return CodeExpr(repr(value))
+        text = repr(value)
+        # A leading minus is unary syntax, including for negative zero.
+        return CodeExpr(text, precedence=2 if text.startswith("-") else 100)
     return CodeExpr(str(value))
 
 
@@ -51,10 +53,10 @@ def _join_arguments(
     return ", ".join(parts)
 
 
-def _maybe_parenthesize(expr: CodeExpr, precedence: int, *, right: bool) -> str:
+def _maybe_parenthesize(expr: CodeExpr, precedence: int, *, group_equal: bool) -> str:
     if expr.precedence < precedence:
         return f"({expr.text})"
-    if right and expr.precedence == precedence:
+    if group_equal and expr.precedence == precedence:
         return f"({expr.text})"
     return expr.text
 
@@ -70,20 +72,27 @@ def make_function(qualified_name: str) -> Any:
     return _function
 
 
-def make_operator(fmt: str, precedence: int, arity: int) -> Any:
+def make_operator(
+    fmt: str, precedence: int, arity: int, *, right_associative: bool = False
+) -> Any:
     def _operator(*args: Any) -> CodeExpr:
         coerced = tuple(_coerce(arg) for arg in args)
         if arity == 1:
             (value,) = coerced
-            formatted = fmt.format(_maybe_parenthesize(value, precedence, right=False))
+            formatted = fmt.format(
+                _maybe_parenthesize(value, precedence, group_equal=False)
+            )
         else:
             leading = coerced[0]
             trailing = coerced[1:]
             formatted_args = [
-                _maybe_parenthesize(leading, precedence, right=False),
+                _maybe_parenthesize(leading, precedence, group_equal=right_associative),
                 *(
                     _maybe_parenthesize(
-                        arg, precedence, right=index == len(trailing) - 1
+                        arg,
+                        precedence,
+                        group_equal=not right_associative
+                        and index == len(trailing) - 1,
                     )
                     for index, arg in enumerate(trailing)
                 ),
@@ -105,7 +114,12 @@ def as_function(obj: Function[Any]) -> Any:
 
 def as_operator(obj: Operator[Any]) -> Any:
     info = get_symbolite_info(obj)
-    return make_operator(info.fmt, info.precedence, info.arity)
+    return make_operator(
+        info.fmt,
+        info.precedence,
+        info.arity,
+        right_associative=info.fmt == "{} ** {}",
+    )
 
 
 def as_named_value(obj: Value[Any]) -> CodeExpr:

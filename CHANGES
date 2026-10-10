@@ -3,6 +3,8 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Preserve nested-power grouping and signed literal bases in generated Python
+  functions and LaTeX expressions.
 - Restore the SymPy backend's statement and container translation contracts;
   preserve symbolic bindings and output order, and support zero-output blocks.
 - Skip only missing optional root dependencies during backend discovery;

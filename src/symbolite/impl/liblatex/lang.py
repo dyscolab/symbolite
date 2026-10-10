@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from ...core import Unsupported
+from ._latexexpr import LatexExpr, _coerce
 
 Block = Unsupported
 
@@ -13,12 +14,12 @@ def to_bool(value: bool, libsl: Any) -> str:
     return "True" if value else "False"
 
 
-def to_int(value: int, libsl: Any) -> str:
-    return repr(value)
+def to_int(value: int, libsl: Any) -> LatexExpr:
+    return _coerce(value)
 
 
-def to_float(value: float, libsl: Any) -> str:
-    return repr(value)
+def to_float(value: float, libsl: Any) -> LatexExpr:
+    return _coerce(value)
 
 
 def to_tuple(value: tuple[Any, ...], libsl: Any) -> str:

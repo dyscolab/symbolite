@@ -39,7 +39,9 @@ def _coerce(value: Any) -> LatexExpr:
     if isinstance(value, bool):
         return LatexExpr("True" if value else "False")
     if isinstance(value, (int, float, complex)):
-        return LatexExpr(repr(value))
+        text = repr(value)
+        # Signed literals have the same precedence as unary negation.
+        return LatexExpr(text, precedence=2 if text.startswith("-") else 100)
     return LatexExpr(str(value))
 
 
@@ -52,11 +54,11 @@ def _join_arguments(
 
 
 def _maybe_parenthesize(
-    expr: LatexExpr, precedence: int, *, right: bool, parenthesize: bool
+    expr: LatexExpr, precedence: int, *, group_equal: bool, parenthesize: bool
 ) -> str:
     if expr.precedence < precedence and parenthesize:
         return f"\\left({expr.text}\\right)"
-    if right and expr.precedence == precedence and parenthesize:
+    if group_equal and expr.precedence == precedence and parenthesize:
         return f"\\left({expr.text}\\right)"
     return expr.text
 
@@ -72,7 +74,14 @@ def make_function(latex_name: str) -> Any:
     return _function
 
 
-def make_operator(fmt: str, precedence: int, arity: int, parenthesize: bool) -> Any:
+def make_operator(
+    fmt: str,
+    precedence: int,
+    arity: int,
+    parenthesize: bool,
+    *,
+    right_associative: bool = False,
+) -> Any:
     def _operator(*args: Any) -> LatexExpr:
         coerced = tuple(_coerce(arg) for arg in args)
         if arity == 1:
@@ -81,7 +90,7 @@ def make_operator(fmt: str, precedence: int, arity: int, parenthesize: bool) -> 
                 _maybe_parenthesize(
                     value,
                     precedence,
-                    right=False,
+                    group_equal=False,
                     parenthesize=parenthesize,
                 )
             )
@@ -92,14 +101,15 @@ def make_operator(fmt: str, precedence: int, arity: int, parenthesize: bool) -> 
                 _maybe_parenthesize(
                     leading,
                     precedence,
-                    right=False,
+                    group_equal=right_associative,
                     parenthesize=parenthesize,
                 ),
                 *(
                     _maybe_parenthesize(
                         arg,
                         precedence,
-                        right=index == len(trailing) - 1,
+                        group_equal=not right_associative
+                        and index == len(trailing) - 1,
                         parenthesize=parenthesize,
                     )
                     for index, arg in enumerate(trailing)
@@ -127,6 +137,7 @@ def as_operator(obj: Operator[Any]) -> Any:
         _get_latex_precedence(obj),
         info.arity,
         parenthesize=_parenthesize(obj),
+        right_associative=info.name == "pow",
     )
 
 
