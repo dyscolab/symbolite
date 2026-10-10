@@ -14,13 +14,24 @@ from typing import Self
 
 from ..core import Value
 from ..core.function import BinaryOperator
+from ..core.symbolite_object import get_symbolite_info
 
 
 class Boolean(Value[bool]):
     """Boolean symbolic value.
 
+    Only a direct Python bool literal permits truth conversion. Named values
+    and expressions require explicit evaluation, even after substitution.
+
     See Symbol and Value for more information.
     """
+
+    def __bool__(self) -> bool:
+        """Return a literal truth value without evaluating symbolic expressions."""
+        value = get_symbolite_info(self).value
+        if isinstance(value, bool):
+            return value
+        return super().__bool__()
 
     def __and__(self, other: Self) -> Boolean:
         """Implements bitwise and using the & operator."""

@@ -41,7 +41,7 @@ class ValueInfo[PT](NamedTuple):
 
 
 class Value[PT](SymboliteObject[ValueInfo[PT]]):
-    """A symbolic value."""
+    """A symbolic value requiring explicit evaluation before truth conversion."""
 
     def __init__(self, name_or_value: Call | Name | PT | str = "") -> None:
         if isinstance(name_or_value, str):
@@ -58,6 +58,13 @@ class Value[PT](SymboliteObject[ValueInfo[PT]]):
                         f"Invalid value name: expected <name> or <namespace>.<name>, got {name_or_value!r}"
                     )
         set_symbolite_info(self, ValueInfo(name_or_value))
+
+    def __bool__(self) -> bool:
+        """Reject implicit evaluation in Python conditions."""
+        raise TypeError(
+            "Cannot convert a symbolic value to bool; "
+            "use translate(...) with an explicit backend."
+        )
 
 
 @set_name.register(Value)

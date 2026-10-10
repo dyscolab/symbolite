@@ -29,7 +29,7 @@ class Symbol(Value[Any]):
         within user code (including uses as dict keys).
         We defined `.eq` y `.ne` methods for the two lasts.
       - __contains__ is coerced to boolean.
-      - __bool__ yields a TypeError if not boolean.
+      - __bool__ raises TypeError; evaluate symbolic values explicitly.
       - __str__, __bytes__, __repr__ yields a TypeError if the return value
         is not of the corresponding type.
         and they might also affect usability in the console.

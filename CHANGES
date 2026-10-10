@@ -3,6 +3,8 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Reject implicit truth conversion of symbolic values. Boolean permits only
+  direct Python bool literals; names and expressions require explicit evaluation.
 - Preserve nested-power grouping and signed literal bases in generated Python
   functions and LaTeX expressions.
 - Restore the SymPy backend's statement and container translation contracts;

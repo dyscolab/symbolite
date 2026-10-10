@@ -172,6 +172,36 @@ distinct, even with the same name and signature. Shallow and deep copies retain
 the same function identity and share its implementation registry, so later
 registrations remain visible through those copies.
 
+### Symbolic conditions
+
+Symbolic values raise `TypeError` when used with `bool()`, in Python conditions,
+or with `not`, `and`, and `or`. Chained comparisons such as `0 < x < 10` also
+raise: write `(0 < x) & (x < 10)` to preserve both symbolic conditions. Use `|`
+for symbolic disjunction. Compound Boolean support depends on the backend;
+the Python code backend and compiled numerical blocks support these operators.
+
+`Boolean(True)` and `Boolean(False)` permit truth conversion because they wrap
+direct Python `bool` literals. Named Booleans, nested wrappers, and Boolean
+expressions require explicit evaluation. Substitution alone does not evaluate
+an expression, and truth conversion never selects a backend or calls a function.
+
+```python
+from symbolite import Real, substitute, translate
+from symbolite.abstract import Boolean
+from symbolite.impl import libstd
+
+assert bool(Boolean(True)) is True
+assert bool(Boolean(False)) is False
+
+x = Real("x")
+condition = substitute(x < 0, {x: -5})
+# bool(condition) raises TypeError; evaluate explicitly instead.
+assert bool(translate(condition, libstd)) is True
+```
+
+Python `==` and `!=` still compare symbolic objects structurally and return
+ordinary booleans. Use `.eq()` and `.ne()` to construct mathematical comparisons.
+
 ### Structural traversal and extensions
 
 `symbolite.ops.traversal` exposes the shared structure used by translation,
