@@ -15,4 +15,8 @@ import sympy as sy
 
 from ..libstd.symbol import *
 
+# Mathematical comparisons use SymPy's default relation evaluation.
+eq = sy.Eq
+ne = sy.Ne
+
 Symbol = sy.Symbol

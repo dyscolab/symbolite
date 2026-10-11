@@ -19,9 +19,11 @@ from sympy.codegen.ast import (
 )
 
 from symbolite import Real, Symbol, Vector, substitute, translate
+from symbolite.abstract import real as real_ops
+from symbolite.abstract import symbol as symbol_ops
 from symbolite.core.lang import Assign, Block
 from symbolite.core.value import Value
-from symbolite.impl import Kind, get_all_implementations, libsympy
+from symbolite.impl import Kind, get_all_implementations, libstd, libsympy
 
 
 def _compile_block(block: FunctionDefinition):
@@ -42,6 +44,68 @@ def test_public_sympy_expression_and_substitution():
     expression = x + 2 * y
     assert translate(expression, libsympy) == sx + 2 * sy_
     assert translate(substitute(expression, {x: 3, y: 4}), libsympy) == 11
+
+
+@pytest.mark.parametrize("cls", [Real, Symbol])
+@pytest.mark.parametrize(
+    "method,relation", [("eq", sy.Equality), ("ne", sy.Unequality)]
+)
+def test_sympy_mathematical_comparisons_preserve_unresolved_symbols(
+    cls, method, relation
+):
+    x = cls("x")
+    sx = translate(x, libsympy)
+    result = translate(getattr(x, method)(0), libsympy)
+    assert isinstance(result, relation)
+    assert result.lhs == sx
+    assert result.rhs == 0
+    assert result.free_symbols == {sx}
+
+
+@pytest.mark.parametrize("cls", [Real, Symbol])
+@pytest.mark.parametrize("method", ["eq", "ne"])
+@pytest.mark.parametrize(
+    "value,equal", [(0, True), (0.0, True), (2, False), (2.0, False)]
+)
+def test_sympy_mathematical_comparisons_agree_in_both_substitution_orders(
+    cls, method, value, equal
+):
+    x = cls("x")
+    expression = getattr(x, method)(0)
+    resolved = substitute(expression, {x: value})
+    expected = sy.true if equal == (method == "eq") else sy.false
+    assert translate(resolved, libsympy) is expected
+    assert (
+        translate(expression, libsympy).subs(translate(x, libsympy), value) is expected
+    )
+    assert bool(translate(resolved, libstd)) is bool(expected)
+
+
+@pytest.mark.parametrize("namespace", [real_ops, symbol_ops])
+@pytest.mark.parametrize("method", ["eq", "ne"])
+@pytest.mark.parametrize(
+    "lhs,rhs,equal",
+    [(1, 1.0, True), (real_ops.sqrt(1), 1.0, True), (real_ops.sqrt(4), 3.0, False)],
+)
+def test_sympy_mathematical_comparisons_use_numeric_values(
+    namespace, method, lhs, rhs, equal
+):
+    expression = getattr(namespace, method)(lhs, rhs)
+    expected = sy.true if equal == (method == "eq") else sy.false
+    assert translate(expression, libsympy) is expected
+    assert bool(translate(expression, libstd)) is bool(expected)
+
+
+@pytest.mark.parametrize("method", ["eq", "ne"])
+def test_sympy_mathematical_comparisons_follow_default_evaluation_and_real_assumptions(
+    method,
+):
+    x = Real("x")
+    equal = sy.true if method == "eq" else sy.false
+    unequal = sy.false if method == "eq" else sy.true
+    assert translate(getattr(x, method)(x), libsympy) is equal
+    assert translate(getattr(x, method)(x + 1), libsympy) is unequal
+    assert translate(getattr(x, method)(sy.I), libsympy) is unequal
 
 
 @pytest.mark.parametrize("cls", [Real, Symbol, Value])

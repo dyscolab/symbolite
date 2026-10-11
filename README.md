@@ -246,6 +246,15 @@ assert bool(translate(condition, libstd)) is True
 Python `==` and `!=` still compare symbolic objects structurally and return
 ordinary booleans. Use `.eq()` and `.ne()` to construct mathematical comparisons.
 
+For both `Real` and `Symbol`, the SymPy backend translates `.eq()` and `.ne()`
+to [SymPy `Eq` and `Ne`](https://docs.sympy.org/latest/modules/core.html#sympy.core.relational.Equality).
+With SymPy's default evaluation, decidable comparisons reduce to SymPy `true`
+or `false`; unresolved comparisons retain their symbols for later `.subs(...)`.
+Evaluation follows SymPy's symbol assumptions (including `real=True` for `Real`),
+numeric precision, and special-value conventions. For example,
+`translate(real.sqrt(1).eq(1.0), libsympy)` returns SymPy `true`, even though its
+operands have different numeric representations.
+
 ### Structural traversal and extensions
 
 `symbolite.ops.traversal` exposes the shared structure used by translation,

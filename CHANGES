@@ -3,6 +3,9 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Translate mathematical equality and inequality to SymPy `Eq` and `Ne` for
+  both `Real` and `Symbol`, preserving unresolved relations and comparing
+  numeric values across representations with SymPy's default evaluation.
 - Change `vectorize` and `auto_vectorize` to return `(vector, rewritten)` and
   create a fresh anonymous vector when `into` is omitted (breaking change).
   Replace string-name layouts with keyword-only `order` or `indices` using

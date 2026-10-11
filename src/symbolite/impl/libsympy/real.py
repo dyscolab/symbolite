@@ -20,9 +20,9 @@ from sympy.abc import x, y
 
 from ...core import Unsupported
 
-# Comparison methods (not operator)
-eq = op.eq
-ne = op.ne
+# Mathematical comparisons use SymPy's default relation evaluation.
+eq = sy.Eq
+ne = sy.Ne
 
 # Comparison
 lt = op.lt
