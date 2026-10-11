@@ -3,6 +3,12 @@ Symbolite Changelog
 
 Unreleased
 ----------
+- Complete vector and Boolean backend capability bindings, including JAX indexing
+  and finite-sequence reductions. Define elementwise numerical comparisons and
+  Boolean masks, native standard-library vector operators, and explicit SymPy
+  whole-vector limitations. Generate backend calls for vector and Boolean
+  operations and check capabilities before compiling numerical Blocks; retain
+  native subscript syntax for indexing and indexed assignment targets.
 - Translate mathematical equality and inequality to SymPy `Eq` and `Ne` for
   both `Real` and `Symbol`, preserving unresolved relations and comparing
   numeric values across representations with SymPy's default evaluation.

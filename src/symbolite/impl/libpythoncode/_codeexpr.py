@@ -107,7 +107,7 @@ def make_attribute(name: str) -> CodeExpr:
     return CodeExpr(name)
 
 
-def as_function(obj: Function[Any]) -> Any:
+def as_function(obj: Function[Any] | Operator[Any]) -> Any:
     qualified_name = get_full_name(obj)
     return make_function(qualified_name)
 

@@ -29,7 +29,11 @@ VectorT = Iterable[NumberT]
 
 
 class Vector(Value[VectorT]):
-    """Vector Symbolic value.
+    """Symbolic vector with backend-defined array operations.
+
+    Numerical comparisons produce elementwise Boolean masks. Arithmetic accepts
+    native vector inputs; Python sequence support is guaranteed for indexing and
+    reductions. One-dimensional ``@`` computes a scalar dot product.
 
     See Symbol and Value for information
     """
@@ -107,7 +111,9 @@ class Vector(Value[VectorT]):
         return invert(self)
 
 
-CompOp = BinaryOperator[Vector | VectorT, Vector | VectorT, Boolean]
+CompOp = BinaryOperator[
+    Vector | VectorT | Real | NumberT, Vector | VectorT | Real | NumberT, Boolean
+]
 
 # Comparison methods (not operator)
 eq = CompOp("eq", "vector", precedence=-5, fmt="{} == {}", output_type=Boolean)

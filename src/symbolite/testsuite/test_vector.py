@@ -7,7 +7,6 @@ import pytest
 from symbolite import Real, Symbol, real, vector
 from symbolite.abstract.boolean import Boolean
 from symbolite.abstract.lang import Assign, Block
-from symbolite.core import Unsupported
 from symbolite.impl import get_all_implementations, libstd
 from symbolite.ops import as_code, substitute, translate
 from symbolite.ops.base import evaluate, value_names
@@ -95,11 +94,8 @@ def test_impl(libsl: types.ModuleType):
     except ImportError:
         pass
 
-    try:
-        expr = vector.sum(v)
-        assert evaluate(substitute(expr, {v: v1234}), libsl=libsl) == 10
-    except Unsupported:
-        pass
+    expr = vector.sum(v)
+    assert evaluate(substitute(expr, {v: v1234}), libsl=libsl) == 10
 
     expr = vector.prod(v)
     assert evaluate(substitute(expr, {v: v1234}), libsl=libsl) == 24

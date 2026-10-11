@@ -255,6 +255,36 @@ numeric precision, and special-value conventions. For example,
 `translate(real.sqrt(1).eq(1.0), libsympy)` returns SymPy `true`, even though its
 operands have different numeric representations.
 
+Vector operations have an explicit backend contract:
+
+| Backend | Supported vector inputs and operations | Boolean composition |
+|---|---|---|
+| Standard library | Indexing and reductions on finite lists/tuples; arithmetic and comparisons through supplied objects' native vector operators | Native Boolean operators on scalars and Boolean masks |
+| NumPy | Native array arithmetic, elementwise comparisons, indexing and reductions | Elementwise logical AND, OR and XOR |
+| JAX | Native array operations; indexing and reductions also accept finite lists/tuples, with reduction inputs converted to JAX arrays | Elementwise logical AND, OR and XOR |
+| SymPy | Symbolic vector indexing; sums and products over explicit finite sequences | Symbolic `And`, `Or` and `Xor` |
+
+For numerical arrays, vector `.eq()` and `.ne()` produce elementwise Boolean
+masks. One-dimensional `@` computes a scalar dot product; `sum` and `prod`
+produce scalar results, with empty sequences yielding `0` and `1`, respectively.
+Broadcasting, numeric precision, dtype promotion, and invalid-input errors follow
+the selected backend. Lists and tuples support indexing and reductions in the
+standard backend; arithmetic on them raises `TypeError` to avoid concatenation,
+repetition, or scalar sequence equality being interpreted as vector mathematics.
+Native array indexing follows backend conventions: NumPy raises `IndexError`
+for out-of-bounds retrieval, while [JAX clamps retrieval indices](https://docs.jax.dev/en/latest/notebooks/Common_Gotchas_in_JAX.html#out-of-bounds-indexing).
+
+SymPy whole-vector arithmetic and comparisons raise `Unsupported`; a symbolic
+`IndexedBase` also needs explicit finite values for reductions. Numerical backends
+require named vector and Boolean inputs to be substituted or supplied as block
+arguments. SymPy retains these names symbolically.
+
+Generated numerical blocks call the same vector and Boolean primitives as direct
+translation, for example `vector.sub(v, 1)` and `boolean.and_(left, right)`.
+Indexed access retains native subscript syntax, including assignment targets.
+Compilation checks vector and Boolean capabilities before executing generated
+source. Every declared primitive is bound to an implementation or `Unsupported`.
+
 ### Structural traversal and extensions
 
 `symbolite.ops.traversal` exposes the shared structure used by translation,

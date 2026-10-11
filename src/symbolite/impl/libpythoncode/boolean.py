@@ -11,11 +11,11 @@ Code-emitting counterparts for ``symbolite.abstract.boolean``.
 from __future__ import annotations
 
 from ...abstract import boolean as abstract_boolean
-from ._codeexpr import CodeExpr, as_operator
+from ._codeexpr import CodeExpr, as_function
 
-and_ = as_operator(abstract_boolean.and_)
-xor = as_operator(abstract_boolean.xor)
-or_ = as_operator(abstract_boolean.or_)
+and_ = as_function(abstract_boolean.and_)
+xor = as_function(abstract_boolean.xor)
+or_ = as_function(abstract_boolean.or_)
 
 
 def Boolean(name: str) -> CodeExpr:

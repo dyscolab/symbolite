@@ -31,14 +31,19 @@ def compile(
 
     assert libsl is not None
 
+    backend_namespaces = {
+        "symbol": libsl.symbol,
+        "real": libsl.real,
+        "vector": libsl.vector,
+    }
+    if hasattr(libsl, "boolean"):
+        backend_namespaces["boolean"] = libsl.boolean
+
     namespace: dict[str, Any] = {}
     exec(  # noqa: S102
         code,
         {
-            "symbol": libsl.symbol,
-            "real": libsl.real,
-            # "bool": libsl.boolean, # TODO
-            "vector": libsl.vector,
+            **backend_namespaces,
             **globals(),
         },
         namespace,

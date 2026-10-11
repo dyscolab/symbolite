@@ -53,6 +53,8 @@ def translate(obj: Any, libsl: types.ModuleType) -> Any:
     before backend calls, including payloads mutated after construction. This
     validation does not evaluate expressions; registered overrides still prune
     their subtrees and control their own validation when not delegating.
+    Numerical Blocks also resolve vector/Boolean capabilities before compilation,
+    so unsupported primitives cannot be bypassed by generated Python operators.
     """
 
     return fold(
@@ -144,7 +146,10 @@ def translate_lang(obj: Any, libsl: types.ModuleType, *, name: str) -> Any:
         return obj
     translator = _resolve(libsl, f"lang.{name}")
     if name in ("Assign", "Block"):
-        _validate_statement(obj)
+        capabilities = (
+            libsl if name == "Block" and hasattr(libsl.lang, "CODE_IMPL") else None
+        )
+        _validate_statement(obj, capabilities=capabilities)
     return translator(obj, libsl)
 
 
@@ -155,8 +160,10 @@ for _type, _name in _LANG_TRANSLATORS.items():
 _STATEMENT_HANDLERS = (translate.dispatch(Assign), translate.dispatch(Block))
 
 
-def _validate_statement(obj: Any) -> None:
-    """Check cycles first, then Block dependencies, without running backends.
+def _validate_statement(
+    obj: Any, *, capabilities: types.ModuleType | None = None
+) -> None:
+    """Check cycles, optional compiled capabilities, and Block dependencies.
 
     The root is already routed to a native statement handler, including saved
     parent delegation. Other operation overrides still prune their subtrees.
@@ -165,6 +172,7 @@ def _validate_statement(obj: Any) -> None:
     """
     handler: Callable[..., Any] | None = None
     blocks: list[BlockInfo] = []
+    compiled_names: list[str] = []
 
     def descend(_node: Any) -> bool:
         return handler is None or any(
@@ -174,6 +182,11 @@ def _validate_statement(obj: Any) -> None:
     for index, node in enumerate(walk(obj, descend=descend)):
         selected = _dispatch.select(node) if index else None
         handler = None if selected is None else selected[0]
+        if capabilities is not None and handler is translate_named_function:
+            assert selected is not None
+            function_info = selected[1]
+            if function_info.namespace in ("vector", "boolean"):
+                compiled_names.append(f"{function_info.namespace}.{function_info.name}")
         if not descend(node):
             continue
         info = get_symbolite_info(node) if isinstance(node, SymboliteObject) else node
@@ -182,6 +195,9 @@ def _validate_statement(obj: Any) -> None:
 
     for info in blocks:
         _validate_block_dependencies(info)
+    if capabilities is not None:
+        for name in compiled_names:
+            _resolve(capabilities, name)
 
 
 def _resolve_value(obj: Value[Any], libsl: types.ModuleType) -> Any:

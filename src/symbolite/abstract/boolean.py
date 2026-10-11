@@ -18,7 +18,7 @@ from ..core.symbolite_object import get_symbolite_info
 
 
 class Boolean(Value[bool]):
-    """Boolean symbolic value.
+    """Symbolic scalar predicate or elementwise Boolean mask.
 
     Only a direct Python bool literal permits truth conversion. Named values
     and expressions require explicit evaluation, even after substitution.

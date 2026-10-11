@@ -10,8 +10,8 @@ into values and functions defined in JAX.
 """
 
 from .. import Kind
-from . import lang, real, symbol, vector
+from . import boolean, lang, real, symbol, vector
 
 KIND = Kind.VALUE
 
-__all__ = ["lang", "real", "symbol", "vector"]
+__all__ = ["boolean", "lang", "real", "symbol", "vector"]
