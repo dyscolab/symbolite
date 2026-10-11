@@ -17,39 +17,52 @@ from typing_extensions import type_repr
 from ...abstract.lang import Assign as _Assign
 from ...abstract.lang import Block as _Block
 from ...core.symbolite_object import get_symbolite_info
+from ...core.value import Name
 from ...ops._get_name import get_full_name, get_name
 from ...ops._translate import translate
-from ._codeexpr import CodeExpr, _coerce
+from ._codeexpr import CodeExpr, _coerce, validate_identifier, validate_qualified_name
 
 
 def Block(obj: _Block, libsl: Any) -> str:
     """Translate a BlockInfo into a Python function definition."""
 
     info = get_symbolite_info(obj)
+    name = validate_identifier(get_name(info), role="block name")
+
+    input_names = []
+    for var in info.inputs:
+        value = get_symbolite_info(var).value
+        if not isinstance(value, Name) or value.namespace:
+            raise ValueError("Python block inputs must be unqualified named values.")
+        input_names.append(validate_identifier(value.name, role="parameter name"))
+    if len(set(input_names)) != len(input_names):
+        raise ValueError("Python block input names must be unique.")
 
     parameters = tuple(
-        f"{get_name(var)}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
-        for var in info.inputs
+        f"{name}: {type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
+        for name, var in zip(input_names, info.inputs)
     )
 
     body = [translate(assign, libsl) for assign in info.lines]
 
-    ret = {
-        f"{get_full_name(var)}": f"{type_repr(var.__class__).removeprefix('symbolite.abstract.')}"
+    ret = tuple(
+        (
+            validate_qualified_name(get_full_name(var)),
+            type_repr(var.__class__).removeprefix("symbolite.abstract."),
+        )
         for var in info.outputs
-    }
+    )
 
     match len(info.outputs):
         case 0:
             return_vars, return_ann = "None", "None"
         case 1:
-            return_vars, return_ann = ret.popitem()
+            (return_vars, return_ann) = ret[0]
         case _:
-            # Note: this assumes iter keys an values separately preserves order
-            return_vars = ", ".join(ret.keys())
-            return_ann = "tuple[" + ", ".join(ret.values()) + "]"
+            return_vars = ", ".join(name for name, _ in ret)
+            return_ann = "tuple[" + ", ".join(annotation for _, annotation in ret) + "]"
 
-    header = f"def {get_name(info)}({', '.join(parameters)}) -> {return_ann}"
+    header = f"def {name}({', '.join(parameters)}) -> {return_ann}"
 
     parts = [f"{header}:"]
     if body:

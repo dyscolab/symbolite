@@ -11,7 +11,7 @@ Code-emitting counterparts for ``symbolite.abstract.vector``.
 from __future__ import annotations
 
 from ...abstract import vector as abstract_vector
-from ._codeexpr import CodeExpr, as_function, as_operator
+from ._codeexpr import CodeExpr, as_function, as_operator, validate_identifier
 
 eq = as_function(abstract_vector.eq)
 ne = as_function(abstract_vector.ne)
@@ -35,7 +35,7 @@ prod = as_function(abstract_vector.prod)
 
 
 def Vector(name: str) -> CodeExpr:
-    return CodeExpr(name)
+    return CodeExpr(validate_identifier(name, role="value name"))
 
 
 __all__ = [

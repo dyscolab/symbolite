@@ -10,9 +10,12 @@ Utilities to build Python source snippets from Symbolite expressions.
 
 from __future__ import annotations
 
+import keyword
+import math
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any
+from unicodedata import normalize
 
 from ...core.function import Function, Operator
 from ...core.symbolite_object import get_symbolite_info
@@ -31,6 +34,22 @@ class CodeExpr:
         return self.text
 
 
+def validate_identifier(name: str, *, role: str = "identifier") -> str:
+    """Validate and normalize a Python identifier before emitting source."""
+    normalized = normalize("NFKC", name)
+    if (
+        not name.isidentifier()
+        or keyword.iskeyword(normalized)
+        or normalized == "__debug__"
+    ):
+        raise ValueError(f"Invalid Python {role}: {name!r}")
+    return normalized
+
+
+def validate_qualified_name(name: str) -> str:
+    return ".".join(validate_identifier(part) for part in name.split("."))
+
+
 def _coerce(value: Any) -> CodeExpr:
     if isinstance(value, CodeExpr):
         return value
@@ -38,6 +57,14 @@ def _coerce(value: Any) -> CodeExpr:
         return CodeExpr(value)
     if isinstance(value, bool):
         return CodeExpr("True" if value else "False")
+    if isinstance(value, float) and not math.isfinite(value):
+        # Numeric syntax avoids global lookups, even if inputs are called
+        # float, inf, or nan. Keep NaN grouped when used inside an operator.
+        if math.isnan(value):
+            return CodeExpr("(1e309 - 1e309)")
+        if value < 0:
+            return CodeExpr("-1e309", precedence=2)
+        return CodeExpr("1e309")
     if isinstance(value, (int, float, complex)):
         text = repr(value)
         # A leading minus is unary syntax, including for negative zero.
@@ -49,7 +76,10 @@ def _join_arguments(
     args: Iterable[CodeExpr], kwargs: Iterable[tuple[str, CodeExpr]]
 ) -> str:
     parts = [arg.text for arg in args]
-    parts.extend(f"{key}={value.text}" for key, value in kwargs)
+    parts.extend(
+        f"{validate_identifier(key, role='keyword argument')}={value.text}"
+        for key, value in kwargs
+    )
     return ", ".join(parts)
 
 
@@ -62,6 +92,8 @@ def _maybe_parenthesize(expr: CodeExpr, precedence: int, *, group_equal: bool) -
 
 
 def make_function(qualified_name: str) -> Any:
+    qualified_name = validate_qualified_name(qualified_name)
+
     def _function(*args: Any, **kwargs: Any) -> CodeExpr:
         coerced_args = tuple(_coerce(arg) for arg in args)
         coerced_kwargs = tuple((k, _coerce(v)) for k, v in kwargs.items())
@@ -104,7 +136,7 @@ def make_operator(
 
 
 def make_attribute(name: str) -> CodeExpr:
-    return CodeExpr(name)
+    return CodeExpr(validate_qualified_name(name))
 
 
 def as_function(obj: Function[Any] | Operator[Any]) -> Any:

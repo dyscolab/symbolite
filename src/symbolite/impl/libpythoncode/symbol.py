@@ -11,7 +11,13 @@ Code-emitting counterparts for ``symbolite.abstract.symbol``.
 from __future__ import annotations
 
 from ...abstract import symbol as abstract_symbol
-from ._codeexpr import CodeExpr, as_function, as_operator, make_function
+from ._codeexpr import (
+    CodeExpr,
+    as_function,
+    as_operator,
+    make_function,
+    validate_identifier,
+)
 
 eq = as_operator(abstract_symbol.eq)
 ne = as_operator(abstract_symbol.ne)
@@ -44,7 +50,7 @@ invert = as_operator(abstract_symbol.invert)
 
 
 def Symbol(name: str) -> CodeExpr:
-    return CodeExpr(name)
+    return CodeExpr(validate_identifier(name, role="value name"))
 
 
 __all__ = [

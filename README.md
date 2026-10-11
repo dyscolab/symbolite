@@ -140,6 +140,31 @@ remain Python containers. Integer-indexed assignment targets require a SymPy
 Backend discovery skips absent optional libraries, but propagates import errors
 inside installed libraries or Symbolite backends.
 
+Python code generation preserves block outputs in their declared order,
+including repetitions: `(x, x)` returns a two-element tuple containing the same
+value twice. No outputs return `None`; one output returns that value directly.
+The generated return annotation follows the same output sequence. Float NaN
+and both signs of infinity are emitted using self-contained numeric expressions,
+so scalar and nested container literals require no `inf` or `nan` globals.
+
+Python block names, parameter names, expression names, and emitted function and
+keyword names must be valid Python identifiers and cannot be keywords. Unicode
+identifiers use Python's NFKC normalization, and parameter names must remain
+unique after normalization. Block inputs must be unqualified named values;
+namespaces such as `real.pi` and `real.cos` refer to backend attributes.
+Invalid names raise `ValueError` during Python emission, before compilation.
+The lower-level `symbolite.impl._lang_value_utils.compile` function executes
+trusted Python source with ordinary Python capabilities. Identifier validation
+does not sandbox arbitrary source or custom code implementations.
+
+When a symbolic value is declared as a class attribute, an anonymous value can
+adopt the attribute's name before it is hashed. Hashing the value or an
+expression containing it finalizes its name; later automatic naming raises
+`ValueError` (some Python versions wrap it in `RuntimeError` during class creation).
+Explicitly named values retain their original names when reused as attributes;
+a different attribute name produces a warning and acts as an alias. Give values
+explicit names before placing them in substitution dictionaries or sets.
+
 `vector.vectorize` replaces selected scalar symbols with vector elements. It
 always returns `(vector, rewritten)`: omitting `into` creates a fresh anonymous
 `Vector()`, while supplying `into` reuses that exact vector. Use `order` for

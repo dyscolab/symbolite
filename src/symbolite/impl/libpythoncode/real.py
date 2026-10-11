@@ -17,6 +17,7 @@ from ._codeexpr import (
     as_named_value,
     as_operator,
     make_function,
+    validate_identifier,
 )
 
 eq = as_operator(abstract_real.eq)
@@ -28,7 +29,7 @@ ge = as_operator(abstract_real.ge)
 
 
 def Real(name: str) -> CodeExpr:
-    return CodeExpr(name)
+    return CodeExpr(validate_identifier(name, role="value name"))
 
 
 add = as_operator(abstract_real.add)

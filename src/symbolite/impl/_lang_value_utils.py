@@ -21,7 +21,12 @@ def compile(
     code: str,
     libsl: types.ModuleType | None = None,
 ) -> dict[str, Any]:
-    """Compile code for a given implementation module and return the namespace."""
+    """Execute trusted Python source and return the resulting namespace.
+
+    This uses ordinary Python capabilities and is not a sandbox. Symbolite's
+    Python emitter validates identifiers, but arbitrary source and custom code
+    implementations must still be trusted by the caller.
+    """
 
     if libsl is None:
         libsl = find_module_in_stack()

@@ -59,6 +59,14 @@ class Value[PT](SymboliteObject[ValueInfo[PT]]):
                     )
         set_symbolite_info(self, ValueInfo(name_or_value))
 
+    def __hash__(self) -> int:
+        result = super().__hash__()
+        # Descriptor naming is a construction step. Once a name contributes to
+        # a hash (including a containing expression's hash), it must stay fixed.
+        if isinstance(get_symbolite_info(self).value, Name):
+            object.__setattr__(self, "__symbolite_name_finalized__", True)
+        return result
+
     def __bool__(self) -> bool:
         """Reject implicit evaluation in Python conditions."""
         raise TypeError(
@@ -78,11 +86,22 @@ def set_name_value(obj: Value[Any], owner: Any, name: str):
         if value.namespace != "":
             return
 
-        if not current_name.startswith(PREFIX) and current_name != name:
+        if current_name == name:
+            return
+
+        if not current_name.startswith(PREFIX):
             import warnings
 
             warnings.warn(
-                f"Mismatched names in attribute {name}: {type(obj)} is named {current_name}"
+                f"Mismatched names in attribute {name}: {type(obj)} is named "
+                f"{current_name}; keeping the existing name."
+            )
+            return
+
+        if getattr(obj, "__symbolite_name_finalized__", False):
+            raise ValueError(
+                f"Cannot name anonymous value {name!r} after it has been hashed; "
+                "give it an explicit name before using it as a key."
             )
 
         set_symbolite_info(obj, ValueInfo(Name(name, "")))
