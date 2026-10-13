@@ -18,6 +18,7 @@ _OPTIONAL_DEPENDENCIES = {
     "libnumpy": "numpy",
     "libjax": "jax",
     "libsympy": "sympy",
+    "libnumba": "numba",
 }
 
 

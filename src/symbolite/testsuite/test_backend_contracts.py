@@ -16,6 +16,11 @@ from symbolite.ops.traversal import project
 
 BACKENDS = get_all_implementations()
 NUMERICAL = {name: lib for name, lib in BACKENDS.items() if name != "libsympy"}
+libnumba = BACKENDS.get("libnumba")
+try:
+    import numba
+except ImportError:
+    numba = None
 VECTOR_OPERATIONS = {
     "eq",
     "ne",
@@ -143,6 +148,8 @@ def test_numerical_vector_contract(np, libsl, name, build, expected):
 @pytest.mark.parametrize("values", [(), [], (2, 3, 4), [2, 3, 4]])
 @pytest.mark.parametrize("operation", [vector.sum, vector.prod])
 def test_finite_sequence_reduction_contract(libsl, values, operation):
+    if libsl is libnumba:
+        pytest.skip("libnumba does not support finite sequence reductions on tuples/lists")
     expected = (
         (0 if operation is vector.sum else 1)
         if not values
@@ -165,12 +172,19 @@ def test_sequence_indexing_contract(libsl, values):
         translate(substitute(v[3], {v: values}), libsl)
     out = Real("out")
     block = Block((v,), (out,), (Assign(out, v[3]),))
-    with pytest.raises(IndexError):
+    expected_error = (
+        (IndexError, numba.core.errors.TypingError)
+        if numba and libsl is libnumba
+        else IndexError
+    )
+    with pytest.raises(expected_error):
         translate(block, libsl)(values)
 
 
 @pytest.mark.parametrize("libsl", NUMERICAL.values(), ids=NUMERICAL.keys())
 def test_native_array_index_bounds_follow_backend_semantics(np, libsl):
+    if libsl is libnumba:
+        pytest.skip("libnumba does not perform runtime array bounds checking by default")
     v, out = Vector("v"), Real("out")
     values = np.asarray([1, 2, 3])
     if libsl.__name__.endswith("libjax"):
@@ -226,6 +240,10 @@ def test_boolean_scalar_truth_tables(
                 assert bool(actual) is expected
                 if libsl is libstd:
                     assert isinstance(actual, bool)
+                elif libsl is libnumba:
+                    assert isinstance(actual, bool) or (
+                        actual.dtype.kind == "b" and actual.shape == ()
+                    )
                 else:
                     assert actual.dtype.kind == "b" and actual.shape == ()
 
@@ -287,7 +305,12 @@ def test_invalid_array_inputs_have_matching_native_errors(np, libsl):
         with pytest.raises(error):
             translate(substitute(expression, values), libsl)
         block = Block(tuple(values), (out,), (Assign(out, expression),))
-        with pytest.raises(error):
+        expected_compiled_error = (
+            (error, numba.core.errors.TypingError)
+            if numba and libsl is libnumba
+            else error
+        )
+        with pytest.raises(expected_compiled_error):
             translate(block, libsl)(*values.values())
 
 

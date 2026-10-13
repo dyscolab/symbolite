@@ -10,9 +10,9 @@ into values and functions defined in NumPy and JIT-compiled with Numba.
 """
 
 from .. import Kind
-from . import lang, real, symbol, vector
+from . import boolean, lang, real, symbol, vector
 
 KIND = Kind.VALUE
 
-__all__ = ["lang", "real", "symbol", "vector"]
+__all__ = ["boolean", "lang", "real", "symbol", "vector"]
 

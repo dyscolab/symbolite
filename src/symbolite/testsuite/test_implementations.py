@@ -9,7 +9,12 @@ from symbolite import impl
 
 @pytest.mark.parametrize(
     "backend, dependency",
-    [("libnumpy", "numpy"), ("libjax", "jax"), ("libsympy", "sympy")],
+    [
+        ("libnumpy", "numpy"),
+        ("libjax", "jax"),
+        ("libsympy", "sympy"),
+        ("libnumba", "numba"),
+    ],
 )
 def test_discovery_skips_only_missing_optional_root_dependencies(
     monkeypatch, backend, dependency

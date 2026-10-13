@@ -23,20 +23,7 @@ def Block(obj: _Block, libsl: Any) -> Any:
     """Translate a BlockInfo into a callable that executes on the target backend."""
     func = _Block_numpy(obj, libsl)
     jit_func = numba.njit(func)
+    jit_func.__annotations__ = getattr(func, "__annotations__", {})
     jit_func.__symbolite_def__ = getattr(func, "__symbolite_def__", None)
     jit_func.__symbolite_block__ = getattr(func, "__symbolite_block__", None)
     return jit_func
-
-
-__all__ = [
-    "CODE_IMPL",
-    "Assign",
-    "Block",
-    "to_bool",
-    "to_dict",
-    "to_float",
-    "to_int",
-    "to_list",
-    "to_tuple",
-]
-
