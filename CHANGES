@@ -1,76 +1,29 @@
 Symbolite Changelog
 ===================
 
-Unreleased
-----------
-- Complete vector and Boolean backend capability bindings, including JAX indexing
-  and finite-sequence reductions. Define elementwise numerical comparisons and
-  Boolean masks, native standard-library vector operators, and explicit SymPy
-  whole-vector limitations. Generate backend calls for vector and Boolean
-  operations and check capabilities before compiling numerical Blocks; retain
-  native subscript syntax for indexing and indexed assignment targets.
-- Translate mathematical equality and inequality to SymPy `Eq` and `Ne` for
-  both `Real` and `Symbol`, preserving unresolved relations and comparing
-  numeric values across representations with SymPy's default evaluation.
-- Change `vectorize` and `auto_vectorize` to return `(vector, rewritten)` and
-  create a fresh anonymous vector when `into` is omitted (breaking change).
-  Replace string-name layouts with keyword-only `order` or `indices` using
-  actual scalar symbols; respect every Mapping implementation, validate layouts,
-  and preserve supported container structure. Add `vector_inputs` to inspect
-  the deterministic automatic layout.
-- Align real-function signatures with their public mathematical contracts:
-  add `VariadicFunction` for `hypot`, repair binary declarations, and preserve
-  `fmod`'s dividend-sign convention in the SymPy backend.
-- Reject implicit truth conversion of symbolic values. Boolean permits only
-  direct Python bool literals; names and expressions require explicit evaluation.
-- Preserve nested-power grouping and signed literal bases in generated Python
-  functions and LaTeX expressions.
-- Restore the SymPy backend's statement and container translation contracts;
-  preserve symbolic bindings and output order, and support zero-output blocks.
-- Skip only missing optional root dependencies during backend discovery;
-  surface internal import failures and explicitly check required backends in CI.
-- Share expression/container structure across translation, substitution, and
-  named-object discovery, with explicit-stack traversal and cycle diagnostics.
-- Substitute nested tuples, lists, and dictionary keys/values simultaneously;
-  preserve unchanged symbolic identity where possible and reject rewritten
-  dictionary key collisions.
-- Preserve nested operation registrations and parent-handler delegation;
-  leave unadapted container subclasses and foreign arrays atomic.
-- Centralize traversal dispatch compatibility and consolidate structural
-  translation handlers while retaining operation-specific metadata rules.
-- Share backend language delegation across literals and statements, and
-  qualified-name resolution across functions/operators; preserve subclass
-  routing and independent type overrides.
-- Raise unsupported backend capabilities consistently and require explicit
-  user-function implementations for code backends.
-- Convert container children once; distinguish Python string literals from
-  source fragments, including attribute names and empty tuples.
-- Preserve first-occurrence order with efficient free-value deduplication.
-- Project substitution nodes once and guard cycles across parent-handler
-  delegation without leaking generator context between yields.
-- Expose ops.traversal, bottom-up transform with structural sharing, and
-  translate_layer registration for custom structural backend semantics.
-- Print deep expression/container trees iteratively using structural adapters.
-- Preserve backend exceptions with bounded diagnostics, including failing repr
-  methods; keep traversal exhaustion out of exception context.
-- Give traversed built-in lists and dictionaries fresh containers during
-  substitution, rewrite, and transform, including nested/empty containers;
-  retain sharing of unchanged symbolic branches and foreign leaves, and leave
-  explicit replacement ownership to callers.
-- Substitute statements iteratively while preserving wrapper subclasses and
-  extra state, vectorized Block interfaces, and unchanged Block names; diagnose
-  statement cycles without reaching the recursion limit.
-- Validate reconstructed Blocks and BlockInfo records against dependency and
-  output rules, including reconstruction during rewrite and transform.
-- Validate transform's Block results after the parent rule, allowing interface
-  repairs without weakening direct rebuild checks or custom rebuilder behavior.
-- Check statement cycles and Block dependencies before native backend
-  translation, including post-construction mutations; retain registered
-  subtree pruning and avoid evaluating expressions during validation.
-- Keep user-function and expression equality/hashes stable across backend
-  registration with a separate implementation registry; preserve function
-  identity and registrations across copies, while keeping independently
-  constructed functions distinct even when their names/signatures match.
+1.3.0 (2026-11-23)
+------------------
+- (breaking change) `vectorize` and `auto_vectorize` return `(vector, rewritten)`
+  and create a fresh anonymous vector when `into` is omitted. String-name layouts
+  are replaced by keyword-only `order` or `indices` taking scalar symbols. Add
+  `vector_inputs` to inspect the automatic layout.
+- (breaking change) Symbolic values no longer support implicit truth conversion.
+- Complete vector and Boolean operation support across backends (including JAX
+  indexing and reductions), with capability checks before compiling Blocks.
+- SymPy backend: translate equality/inequality to `Eq`/`Ne`, fix the `fmod` sign
+  convention, and restore statement and container translation.
+- Add `VariadicFunction` (used by `hypot`) and fix binary function signatures.
+- Expose `ops.traversal`, a bottom-up `transform` and `translate_layer` for custom
+  structural backends. Traversal is iterative, handles deep trees and detects cycles.
+- Substitute nested tuples, lists and dicts (keys and values) simultaneously,
+  returning fresh built-in containers.
+- Validate Blocks (dependencies, outputs, statement cycles) on reconstruction and
+  before backend translation.
+- Keep function and expression equality/hashes stable across backend
+  registration. Code backends require explicit user-function implementations.
+- Preserve nested-power grouping and signed bases in generated code and LaTeX.
+- Backend discovery skips only missing optional dependencies. Backend errors
+  keep the original exception with bounded diagnostics.
 
 1.1.1 (2023-9-4)
 ------------------

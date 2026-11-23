@@ -15,4 +15,3 @@ from . import boolean, lang, real, symbol, vector
 KIND = Kind.VALUE
 
 __all__ = ["boolean", "lang", "real", "symbol", "vector"]
-

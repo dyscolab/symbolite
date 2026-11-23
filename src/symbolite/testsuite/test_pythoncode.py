@@ -46,7 +46,9 @@ def test_compiled_nonfinite_scalar_literals(libsl, value):
 @pytest.mark.parametrize("libsl", NUMERICAL.values(), ids=NUMERICAL.keys())
 def test_compiled_nonfinite_structured_literals(libsl):
     if libsl is libnumba:
-        pytest.skip("libnumba does not support returning heterogeneous structured literals")
+        pytest.skip(
+            "libnumba does not support returning heterogeneous structured literals"
+        )
     out = Symbol("out")
     payload = (math.inf, [-math.inf, {"nan": math.nan}])
     block = Block((), (out,), (Assign(out, payload),))

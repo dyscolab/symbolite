@@ -12,4 +12,3 @@ into values and functions defined in NumPy/Numba.
 from __future__ import annotations
 
 from ..libnumpy.boolean import *
-

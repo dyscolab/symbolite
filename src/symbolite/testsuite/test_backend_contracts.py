@@ -149,7 +149,9 @@ def test_numerical_vector_contract(np, libsl, name, build, expected):
 @pytest.mark.parametrize("operation", [vector.sum, vector.prod])
 def test_finite_sequence_reduction_contract(libsl, values, operation):
     if libsl is libnumba:
-        pytest.skip("libnumba does not support finite sequence reductions on tuples/lists")
+        pytest.skip(
+            "libnumba does not support finite sequence reductions on tuples/lists"
+        )
     expected = (
         (0 if operation is vector.sum else 1)
         if not values
@@ -184,7 +186,9 @@ def test_sequence_indexing_contract(libsl, values):
 @pytest.mark.parametrize("libsl", NUMERICAL.values(), ids=NUMERICAL.keys())
 def test_native_array_index_bounds_follow_backend_semantics(np, libsl):
     if libsl is libnumba:
-        pytest.skip("libnumba does not perform runtime array bounds checking by default")
+        pytest.skip(
+            "libnumba does not perform runtime array bounds checking by default"
+        )
     v, out = Vector("v"), Real("out")
     values = np.asarray([1, 2, 3])
     if libsl.__name__.endswith("libjax"):

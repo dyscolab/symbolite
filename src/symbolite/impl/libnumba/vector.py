@@ -11,9 +11,10 @@ into values and functions defined in NumPy/Numba.
 
 from __future__ import annotations
 
-from ..libnumpy.vector import *
 import numpy as np
 from numba.core.extending import overload
+
+from ..libnumpy.vector import *
 
 
 def matmul(a, b):
@@ -28,4 +29,3 @@ def _matmul_ovl(a, b):
         return lambda a, b: a @ b
     else:
         return lambda a, b: np.dot(a, b)
-
